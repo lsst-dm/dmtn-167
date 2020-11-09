@@ -73,34 +73,52 @@ So, for example, a collection can contain *raws* or *coadds*, but not *visits* o
 
 In addition, collections are constrained to hold only one dataset with a particular combination of dataset type (e.g. "calexp") and data ID, with the exception of ``CALIBRATION`` collections, for which there may only be one dataset with a particular dataset type and data ID at any point in time.
 
-.. _daf_butler documentation: https://pipelines.lsst.io/v/weekly/modules/lsst.daf.butler/organizing.html
+.. note::
+   Butler nomenclature in both Gen2 and Gen3 uses "dataset" to refer to entities that are of order one file (e.g. "a raw" or "a coadd" is "a dataset").
+   Informally, we also frequently refer to large sets of these datasets and/or their data IDs ("HSC PDR1" or "DESC DC2") as datasets, but I will avoid that usage whenever possible here.
 
-.. _collections-table:
+The naming patterns for collections proposed here are summarized in :ref:`table-overview`, with details and explanations in the following subsections.
+
+.. _table-overview:
 
 .. table:: Overview of collection naming conventions.
 
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   |          Name Pattern          |    Type     |                             Description                             |
-   +================================+=============+=====================================================================+
-   | <instrument>/defaults          | CHAINED     | Recommended raw, calibration, and auxilliary data for <instrument>. |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | <instrument>/raw/good          | CHAINED     | Recommended raw data for <instrument>.                              |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | <instrument>/raw/good/<ticket> | TAGGED      | Raw data curated to have no problems on <ticket>.                   |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | <instrument>/raw/all           | RUN         | Where all raw data are originally ingested.                         |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | <instrument>/calib             | CHAINED     | Recommended calibrations for <instrument>.                          |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | <instrument>/calib/<ticket>    | CALIBRATION | Calibrations certified on <ticket>.                                 |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | refcats                        | RUN         | All reference catalogs (distinguished by dataset type).             |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
-   | skymaps                        | RUN         | All skymap definition datasets (distinguished by data ID).          |
-   +--------------------------------+-------------+---------------------------------------------------------------------+
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   |                   Name Pattern                    |    Type     |                                  Description                                  |
+   +===================================================+=============+===============================================================================+
+   | <instrument>/defaults                             | CHAINED     | Recommended raw, calibration, and auxilliary data for <instrument>.           |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <instrument>/raw/good                             | CHAINED     | Recommended raw data for <instrument>.                                        |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <instrument>/raw/good/<ticket>                    | TAGGED      | Raw data curated to have no problems on <ticket>.                             |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <instrument>/raw/all                              | RUN         | Where all raw data are originally ingested.                                   |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <instrument>/calib                                | CHAINED     | Recommended calibrations for <instrument>.                                    |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <instrument>/calib/<ticket>                       | CALIBRATION | Calibrations certified on <ticket>.                                           |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <instrument>/calib/<ticket>/*                     | unspecified | Calibration production runs.                                                  |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | [<instrument>/]runs/<target>/<release>/<ticket>   | CHAINED     | Public outputs of processing data <target> with <release> on <ticket>.        |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | [<instrument>/]runs/<target>/<release>/<ticket>/* | unspecified | Private intermediates of processing data <target> with <release> on <ticket>. |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | refcats                                           | CHAINED     | All reference catalogs (distinguished by dataset type).                       |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | refcats/<ticket>                                  | RUN         | One reference catalog, ingested and sharded on <ticket>.                      |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | skymaps                                           | RUN         | All skymap definition datasets (distinguished by data ID).                    |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | u/<user>/*                                        | unspecified | Experimental/development processing by <user>.                                |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
 
-Raw, master calibration, and auxilliary data
---------------------------------------------
+.. _daf_butler documentation: https://pipelines.lsst.io/v/weekly/modules/lsst.daf.butler/organizing.html
+
+.. _collections-per-instrument:
+
+Per-instrument collections
+--------------------------
 
 Raw and calibration data associated with a particular instrument is organized into collections that start with the "short" instrument name, e.g. "HSC" or "LSSTCam-imSim", followed by a slash.
 The naming conventions for these collections are codified by the `lsst.obs.base.Instrument`_ class's ``make*Name`` methods.
@@ -122,22 +140,14 @@ These should have names of the form ``<instrument>/calib/<ticket>``, and we will
 
    ``CALIBRATION`` collections that are not candidates for broad use (e.g. because they represent experimental work on a development branch) should instead start with ``u/<user>``, as described in :ref:`collections-developer-processing-outputs`.
 
-We also have other auxilliary datasets that are not instrument-specific, namely reference catalogs and skymap definitions.
-These are stored in ``refcats`` and ``skymaps`` ``RUN`` collections, respectively; we do not expect to need to use ``CHAINED`` collections for indirection here, because the dataset types and data IDs of these datasets already uniquely identify them.
-In particular:
-
- - The name of a reference catalog (e.g. ``ps1_pv3_3pi_20170110``) is used directly as its dataset type name (note that this was not the case in Gen2, where the reference catalog name was part of its data ID).
-
- - All skymaps must have a globally unique name in Gen3, which is used as part of the data ID for any dataset that is defined on tracts.  The skymap definition datasets (e.g. ``deepCoadd_skyMap``) also include this globally unique name in their data IDs.  The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is something of a relic of Gen2, but one we do not plan to remove until Gen2 is fully removed.  The new globally-unique skymap data ID names are both necessary and sufficient for Gen3, and in the future we may not store skymap definitions in datasets at all, since they must be at least partially defined in the database as well.
-
-Finally, for convenience, we will define per-instrument ``CHAINED`` collections that aggregate the recommended raws (``<instrument>/raw/good``), recommended calibrations (``<instrument>/calib``), and all auxiliary collections (``refcats`` and ``skymaps``), with names of the form ``<instrument>/defaults``.
+Finally, for convenience, we will define per-instrument ``CHAINED`` collections that aggregate the recommended raws (``<instrument>/raw/good``), recommended calibrations (``<instrument>/calib``), as well as auxilliary collections (``refcats`` and ``skymaps``; see :ref:`collections-reference-catalogs` and ref:`collections-skymap-definitions`, respectively), with names of the form ``<instrument>/defaults``.
 
 .. _lsst.obs.base.Instrument: https://pipelines.lsst.io/v/weekly/py-api/lsst.obs.base.Instrument.html#lsst.obs.base.Instrument
 
 .. [#calibs-not-ingested] In Gen2, master calibration datasets *were* ingested, because the data repository in which they were produced was entirely different from the special calibration repository where they were put after certification.  Gen3 data repositories are larger, with Gen3 collections corresponding more closely to Gen2 repositories.  So certifying a master calibration in Gen3 just involves adding it to a new collection, not ingesting it into a new data repository.
 
-HSC-Only Collections
-^^^^^^^^^^^^^^^^^^^^^^^
+HSC-only auxilliary data
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Our HSC processing uses bright object masks produced by external code.
 By analogy with raw and calibration data, these will be stored in a ``HSC/masks/S18A`` ``RUN`` collection, with a ``HSC/masks`` single-element ``CHAINED`` collection pointer to the current best version.
@@ -145,49 +155,229 @@ By analogy with raw and calibration data, these will be stored in a ``HSC/masks/
 It is somewhat unlikely we will ever either add older mask versions or new masks in the same form to LSST data repositories (LSST processing is moving to a different approach, and HSC will follow suit), this gives us a clear place to put them without naming conflicts.
 The top-level ``HSC/defaults`` collection will include ``HSC/masks`` as well.
 
-Official/common processing outputs
+.. _collections-reference-catalogs:
+
+Reference catalogs
+------------------
+
+External reference catalogs reformatted and sharded by DM code are written to ``refcats/<ticket>`` ``RUN`` collections, where ``ticket`` is the ticket on which the reformatting and sharding work was performed.
+After a reference catalog has been validated, its ``RUN`` added to the overall ``refcats`` ``CHAINED`` collection.
+
+Different collections for different reference catalogs are not necessary, as the name of a reference catalog (e.g. ``ps1_pv3_3pi_20170110``) is used directly as its dataset type name (note that this was not the case in Gen2, but there the reference catalog name was part of its data ID).
+
+.. _collections-skymap-definitions:
+
+SkyMap definitions
+------------------
+
+All skymaps must have a globally unique name in Gen3, which is used as part of the data ID for any dataset that is defined on tracts.
+The skymap definition datasets (e.g. ``deepCoadd_skyMap``) also include this globally unique name in their data IDs, and hence can also all go in a single ``skymaps`` collection.
+This is simply a ``RUN`` collection that holds skymap definition datasets directly.
+
+The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is something of a relic of Gen2, but one we do not plan to remove until Gen2 is fully removed.
+The new globally-unique skymap data ID names are both necessary and sufficient for Gen3, and in the future we may not store skymap definitions in datasets at all, since they must be at least partially defined in the database as well.
+
+SkyMap registration is something we expect to be rare in Gen3 - *much* more rare than running ``makeSkyMap.py`` was in Gen2 - because we almost always use one of a few standard SkyMaps, and in Gen3 a SkyMap (a combination of a ``lsst.skymap.BaseSkyMap`` class *and* its configuraiton) can only be registered once.
+While this may not be true for discrete SkyMaps in particular, which cover only a small part of the sky and are *conceptually* a bit more per-user, our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
+
+.. _collections-shared-official-processing-outputs:
+
+Shared/official processing outputs
 ----------------------------------
 
-Science processing
-^^^^^^^^^^^^^^^^^^
+Processing runs overseen by production operators should produce output collections of the form ``<instrument>/runs/<target>/{release}/<ticket>``, or ``runs/<target>/<release>/<ticket>`` in the (rare) case of processing that includes science data from multiple instruments and none of them can be considered the "primary" instrument.
+``target`` is a human-meaningful name for the set of data IDs being processed, and ``release`` is some kind of DM software release version, so examples of complete processing-output collection names might include ``HSC/runs/RC2/w_2020_50/DM-75643`` or ``DECam/runs/HiTS-2015/d_2021_90/DM-80000``.
+These versions are intended to make it easy for users to browse collections and understand what is in them at a glance; formal provenance for software versions actually used in the processing will be automatically stored in the data repository itself.
+Of course, the version in the collection name should differ as little as possible from the versions actually used to reduce confusion.
 
-.. _collections-calibration-production:
+These names should always correspond to a "public" ``CHAINED`` collection that aggregates both all ``RUN`` collections that directly hold outputs and all collections used as inputs.
+The organization of those "private" output ``RUN`` collections (if there is more than one) is completely at operator discretion, though these collection should start with the same prefix as the umbrella ``CHAINED`` collection followed by a slash.
 
-Calibration production
-^^^^^^^^^^^^^^^^^^^^^^
+In cases where one or more private ``RUN`` collections contain datasets that should _not_ be considered part of the final public outputs (e.g. because they are superceded by datasets in other private ``RUN`` collection(s), a ``TAGGED`` collection can be used to filter and aggregate these.
+That ``TAGGED`` collection would then be a direct child of the final public ``CHAINED`` collection, instead of any ``RUN`` collections it references.
+
+.. note::
+
+   It is not generally possible to use a ``TAGGED`` collection as the public output collection for a processing run, because putting master calibrations (which are almost always inputs, even if indirectly) in a ``TAGGED`` collection strips them of their validity ranges and does not allow datasets from different validity ranges to coexist.
+   So even if a ``TAGGED`` collection is used, the public ``CHAINED`` collection would contain both that collection and the input ``CALIBRATION`` collection as children.
+
+.. note::
+
+   These public ``CHAINED`` collections essentially mimic Gen2's "parent link" mechanism, which provides at best approximate coarse-grained provenance information about which datasets were used as inputs when producing others.
+   The Gen3 repository will eventually be extended to include fine-grained, exact provenance - essentially a serialization of the directed acyclic graph (DAG) that describes the processing).
+   Whether queries against that DAG are fast enough to allow this more rigorous provenance information to be used as a type of collection (replacing some usage of ``TAGGED`` and ``CHAINED`` collections) remains to be seen, however.
+   It is also worth noting that in general the full DAG does not maintain the usual collection invariant of having only one dataset with a particular dataset type and data ID (e.g. two calexps with the same data ID, from two differently-configured runs, could each contribute to different coadd patches in a downstream run).
 
 .. _collections-developer-processing-outputs:
 
 Developer processing outputs
 ----------------------------
 
+Processing initiated by DM developers that are intented primarily for personal or small-group use must start with ``u/<user>`` (e.g. ``u/jbosch``), and are strongly encouraged to start with ``u/<user>/<ticket>`` (e.g. ``u/jbosch/DM-56789``) whenever possible.
+Names and structure after this prefix are at user discretion, but we strongly recommend using a combination of ``CHAINED`` collections and ``RUN`` collections to distinguish between "inputs and outputs" collections and "output only" collections, as in :ref:`collections-shared-official-processing-outputs`.
+The ``pipetask`` tool will automatically take care of this if the ``--output`` option is used with or instead of the ``--output-run`` option.
+
+.. note::
+   **TODO**: does BPS provide similar functionality?
+
+
+.. _collections-calibration-production:
+
+Calibration production
+----------------------
+
+Calibration products production runs intended for broad use (i.e. outputs will be at least candidates for membership in the recommended calibration collection for this instrument) should output to collections with names that start with ``<instrument>/calib/<ticket>/``.
+Those produced for experimental or development purposes should start with ``u/<user>/<ticket>/``.
+
+In either case, the ``RUN`` collections that hold output datasets directly will usually require another disambiguating term, mapping roughly to the expected validity range epoch.
+Actual validity ranges are not assigned until datasets are certified (i.e. added to ``CALIBRATION`` collections), and until then, the usual dataset type + data ID constraint applies (i.e. there can only be one ``bias`` for each detector in a particular ``RUN`` collection).
+
+.. note::
+
+   **TODO**: we should resolve this ambiguity about what the last term should be in calibration production collections before submitting for RFC.
+   Gen2 used CalibDate, which I have always found a bit vague.
+   Some hash of input IDs seems a bit better, but it would need to be computed by external code, because we need the output collection name before we start processing (and also because the user probably wants it in some file before they launch any jobs, so they can easily look up what hashes mean).
+   Either should probably be combined with the timestamp suffixes that ``pipetask`` can automatically add to avoid clashes (especially differences to due e.g. configuration rather than inputs).
+
+As noted in :ref:`collections-per-instrument`, certified calibration products intended for broad should go in ``CALIBRATION`` collections named _just_ ``<instrument>/calib/<ticket>``.
+``CALIBRATION`` collections can also of course be nested under ``u/<user>/<ticket>``, but may not always be necessary, because a ``RUN`` collection directly containing e.g. new ``bias`` datasets can also be used as an input to a processing run that generates new ``flat`` datasets (as long as only one calibration epoch is in play).
+
+.. note::
+
+   **TODO**: while the middleware _can_ use ``RUN`` collections as inputs to later CPP processing steps, it's up to the CPP team whether they want to permit that or always certify between steps as a matter of policy.
+   We should resolve this question by the end of the RFC discussion period.
+
+
+.. note::
+
+   "Curated" calibration datasets that are written from a source-of-truth in an ``obs_*_data`` git repository (rather than generated directly via pipeline process) are currently being written to ``RUN`` collections with names of the form ``<instrument>/calib/curated/<calibDate>``, which are then ingested directly into an ``<instrument>/calib`` ``CALIBRATION`` collection (which clashes with our proposal earlier to make ``<instrument>/calib`` a ``CHAINED`` collection "pointer").
+
+   The full workflow for curated calibrations is sufficiently unclear that is unlikely that we will get this right in time for the first long-lived Gen3 repository.
+   For this first repository, our proposal is to use ``RUN`` collections of the form ``<instrument>/calib/curated/<ticket>/<calibDate>``, and a ``CALIBRATION`` collection of the form ``<instrument>/calib/curated/<ticket>``.
+   To support this, the ticket number will become a new required input to the Gen2 to Gen3 conversion tooling.
+
 
 Filesystem locations
 ====================
 
+The main shared data repository for all instruments at NCSA will have a public repository root of ``/datasets/repo``, which will be a symlink to a directory of the form ``/datasets/repo_<YYYYMMDD>``.
+These directories will each contain a ``butler.repo`` yaml that points to the appropriate database (with a one-to-one correspondance between databases or database schemas and ``repo_<YYYYMMDD>`` directories).
 
-Access controls
-===============
+The default (POSIX) datastore will write datasets with templates that begin with the ``RUN`` name, resulting in e.g. the datasets of per-instrument ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/<instrument>/`` and per-user ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/u/<user>``.
+Users are discouraged from inspecting these directories (as this will be impossible in the IDF or other future cloud-based datastores), and _strongly_ discouraged from modifying them in any way other than via middleware tools.
+In many cases, write access actually be prohibited (see :ref:`access-controls`).
 
+When migrations are necessary due to changes in the repository format (something that is _always_ preceded by an RFC with explicit CCB approval), a new ``repo_<YYYYMMDD>`` directory and database/schema pair will be created, and files will shared via hard links until/unless the old repository is retired.
 
-Best practices
-==============
+.. note::
+
+   **TODO**: are hard links viable here from a sysadmin/GPFS perspective?
+   They certainly would make things easier.
+
+We will also designate three other non-repository subdirectories of ``/datasets`` for specific roles:
+
+ - ``/datasets/external`` holds files produced by other projects or surveys that may be of use to multiple users but does not fit into the LSST data model.  This includes the original versions of reference catalogs (e.g. Gaia DR2), truth catalogs (e.g. from DESC DC2), dust maps, etc.  Each subdirectory should have a descriptive README, and no files should be put in ``datasets/external`` itself.
+
+ - ``/datasets/testing`` holds git LFS repositories that are used in CI and rarely change.  These are provided for convenience, and should be updated when their git master branches are; there will be no attempt to make old versions available.
+
+ - ``/datasets/staging`` contains per-instrument subdirectories with raw files that have been transferred from other systems but have not yet been ingested into the data repository.
+
+.. note ::
+
+   **TODO**: get feedback from RHL and NCSA on staging directory substructure, and the workflow for ingestion.
+
+.. _access-controls:
+
+Access Controls
+---------------
+
+The current Gen3 registry architecture does not allow any fine-grained access control in the repository database; we instead rely on "friendly users" being careful and respectful of this shared space.
+
+At the same time, we will use filesystem access controls to protect shared and per-user files, and we plan to implement some checks in the Butler client itself to make it at least extremely difficult to _accidentally_ cause problems.
+
+.. warning::
+
+   NEVER use ``psql`` or other direct-SQL clients (e.g. the Python DBAPI or SQLAlchemy) to perform write operations in the repository database.
+   These can corrupt the data repository, and we have essentially no way to guard against them.
+
+   It should not be necessary in the long term to ever use direct SQL access even for read access; the SQL schema is _not_ considered a public interface - but we recognize that this may be necessary for debugging for a while.
+   This can be ensured by running::
+
+      SET SESSION CHARACTERISTICS AS TRANSACTION;
+
+   at the start of the session.
+
+   If you have to do this (and not at the prompting of a middleware team member trying to help diagnose a problem), please also create a ticket explaining what you wanted to do that couldn't be done with butler tools, so we can address that feature gap.
+
+This proposal specifies filesystem access controls in terms of a number of high-level "roles" that certain operators or developers may temporarily opt in to via ``su`` or special setuid tools.
+Usually these roles will be used only to create subdirectories that are owned directly by the true user.
+How to map these to users, groups, and filesystem, directory, or file-level permissions in detail is something I'd prefer to leave to the system administrators.
+All directories in ``/datasets`` will be world-readable.
+
+Within each ``repo_<YYYYMMDD>`` repository directory:
+
+ - Regular users will always have write access to their own ``u/<user>`` directory.
+
+ - Production operators will have access to an ``execution`` role that can write to ``runs`` and ``<instrument>/runs`` (usually just used to create an owned subdirectory).
+
+ - Production operators and certain CPP team members will have access to a ``calibs`` role that can write to all ``<instrument>/calib`` d (usually just used to create an owned subdirectory).
+
+ - Production operators and Science Pipelines developers who regularly ingest raw data for a particular instrument will have access to per-instrument ``<instrument>_raw`` roles that have write access to the ``<instrument>/raw`` and any auxilliary-data-collection subdirectories (e.g. ``HSC/masks``).  At present, these roles would have to be used directly whenever ingesting new raws, not just to create subdirectories for them, but we may be able to improve this in the future.
+
+ - All production operators and science pipelines developers have access to the ``auxilliaries`` role, which provides write access to the ``refcats`` and ``skymap`` directores.  This role is used to create per-ticket subdirectories in ``refcats`` prior to starting work on ingesting a new reference catalog, and used directly to run ``butler registry-skymaps``.
+
+In addition to these filesystem-level controls, we also plan to provide some *informal* protections based on the the same roles in the butler client: the ``Butler`` and ``Registry`` classes (and associated command-line tools) will accept a ``role`` argument that permits write operations on collections with certain associated prefixes.
+The default role is the user's unix username, which provides write access only to ``u/<user>`` collections.
+These guards against careless fingers, not careless brains - we will not attempt to restrict which roles a user can assume *at the butler client level*.
+
+.. note::
+
+   This proposal intentionally makes no mention of the RFC process that is currently in place for ``/datasets`` for Gen2, or the ``/project`` filesystem.
+
+   In practice, RFCs for most modifications - certainly routine ingests or calibration updates - almost never exceed our `Empowerment of DM team members`_ criteria, and asking for sysadmins who are not domain experts to do the actual work both increases friction and increases the chance something will go wrong (or, rather, the chances that if something does go wrong, it is not fixed immediately).
+
+   This proposal makes no objection to having a separate ``/project`` filesystem for files.
+   But using ``/project`` and symlinks as a way to work around restrictions on write access to appropriate subsets of ``/datasets`` is just that - a workaround - and one that makes it more difficult than it ought to be to find things.
+   If filesystem-level controls (or quotas, etc.) really are necessary, I think this is something we can tolerate, but regular directory permission controls within ``/datasets`` would be preferable.
+   At the very least, we should ensure that::
+
+       /datasets/repo/u/<user> -> /project/<user>/.datarepo
+
+   link (or equivalent) is automatically created with the right permissions for all users, and encourage access only via that symlink (hence the hidden directory as a target).
+
+.. _Empowerment of DM team members: https://developer.lsst.io/team/empowerment.html#empowerment-of-dm-team-members>
 
 
 Personal and test-package repositories
 ======================================
 
+This proposal is primarily concerned with long-lived, shared data repositories of the sort that will exist not just at NCSA, but at the IDF, SLAC, CCIN2P3, and other major LSST data facilities.
 
-Notable Omissions
-=================
+Small repositories (typically backed by SQLite) are also expected to be common, especially for small-scale CI and local development.
+These repositories should follow the same naming patterns whenever possible, but will generally not need as many levels of indirection to guard against future changes or collections, and many of the collections defined here as ``CHAINED`` or ``TAGGED`` collections can instead be safely defined directly as ``RUN`` collections instead.
+
+
+Notable omissions and future work
+=================================
+
+"Collections" of data IDs
+-------------------------
 
 Collections that represent fields of particular interest or regularly-reprocessed test datasets are not described here, because those are conceptually more groups of data IDs than groups of raws (e.g. not just raw exposures, but tracts on which to combine them as well).
 As in Gen2, we will continue to record the definitions of these groups outside the data repository itself, though we may add support for in-repository storage to Gen3 in the future.
-It is also worth noting that exposure or visit metadata can sometimes be used to help select some of these data IDs (e.g. ``visit.target_name='SSP-Wide``), and these selections are automatically combined with the filters of a ``<instrument/raw/good`` input collection.
+It is also worth noting that exposure or visit metadata can sometimes be used to help select some of these data IDs (e.g. ``visit.target_name='SSP-Wide``), and these selections are automatically combined with the filters of a ``<instrument>/raw/good`` input collection.
 
 
-.. Add content here.
-.. Do not include the document title (it's automatically added from metadata.yaml).
+Naming conventions for dataset types
+------------------------------------
+
+The names for nearly all dataset types in Gen3 have been inherited directly from Gen2, and while these are sorely in need of standardization and cleanup, we have no plans to change to new names until Gen2 has been fully retired.
+Naming conventions for new dataset types would be welcome before then, but are still beyond the scope of this proposal.
+
+In the meantime, users should be aware that dataset types are *global* entities with no implicit namespacing, and hence new dataset types should be created with care.
+The ``pipetask`` tool's ``--register-dataset-types`` option is a non-default option for exactly this reason: in a long-lived repository, re-executions of the same pipeline will eventually outnumber executions of new pipelines (especially new pipelines with new datasets), and hence ``--register-dataset-types`` should rarely be needed.
+Passing it all the time as a matter of habit is an antipattern, because it makes it easy for a typo to result in long-lived, hard-to-clean-up garbage (dataset types can be removed, but only if there are no datasets of that type).
+
 
 .. .. rubric:: References
 
