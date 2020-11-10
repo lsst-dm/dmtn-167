@@ -193,7 +193,7 @@ Of course, the version in the collection name should differ as little as possibl
 These names should always correspond to a "public" ``CHAINED`` collection that aggregates both all ``RUN`` collections that directly hold outputs and all collections used as inputs.
 The organization of those "private" output ``RUN`` collections (if there is more than one) is completely at operator discretion, though these collection should start with the same prefix as the umbrella ``CHAINED`` collection followed by a slash.
 
-In cases where one or more private ``RUN`` collections contain datasets that should _not_ be considered part of the final public outputs (e.g. because they are superceded by datasets in other private ``RUN`` collection(s), a ``TAGGED`` collection can be used to filter and aggregate these.
+In cases where one or more private ``RUN`` collections contain datasets that should _not_ be considered part of the final public outputs (e.g. because they are superceded by datasets in other private ``RUN`` collection(s), a ``TAGGED`` collection can be used to screen and aggregate these.
 That ``TAGGED`` collection would then be a direct child of the final public ``CHAINED`` collection, instead of any ``RUN`` collections it references.
 
 .. note::
@@ -264,8 +264,8 @@ The main shared data repository for all instruments at NCSA will have a public r
 These directories will each contain a ``butler.repo`` yaml that points to the appropriate database (with a one-to-one correspondance between databases or database schemas and ``repo_<YYYYMMDD>`` directories).
 
 The default (POSIX) datastore will write datasets with templates that begin with the ``RUN`` name, resulting in e.g. the datasets of per-instrument ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/<instrument>/`` and per-user ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/u/<user>``.
-Users are discouraged from inspecting these directories (as this will be impossible in the IDF or other future cloud-based datastores), and _strongly_ discouraged from modifying them in any way other than via middleware tools.
-In many cases, write access actually be prohibited (see :ref:`access-controls`).
+Users are discouraged from inspecting these directories (as this will be at least quite different in the IDF or other future cloud-based datastores), and _strongly_ discouraged from modifying them in any way other than via middleware tools.
+In many cases, write access will actually be prohibited (see :ref:`access-controls`).
 
 When migrations are necessary due to changes in the repository format (something that is _always_ preceded by an RFC with explicit CCB approval), a new ``repo_<YYYYMMDD>`` directory and database/schema pair will be created, and files will shared via hard links until/unless the old repository is retired.
 
@@ -274,13 +274,13 @@ When migrations are necessary due to changes in the repository format (something
    **TODO**: are hard links viable here from a sysadmin/GPFS perspective?
    They certainly would make things easier.
 
-We will also designate three other non-repository subdirectories of ``/datasets`` for specific roles:
+We will also designate two other non-repository subdirectories of ``/datasets`` for specific roles:
 
  - ``/datasets/external`` holds files produced by other projects or surveys that may be of use to multiple users but does not fit into the LSST data model.  This includes the original versions of reference catalogs (e.g. Gaia DR2), truth catalogs (e.g. from DESC DC2), dust maps, etc.  Each subdirectory should have a descriptive README, and no files should be put in ``datasets/external`` itself.
 
  - ``/datasets/testing`` holds git LFS repositories that are used in CI and rarely change.  These are provided for convenience, and should be updated when their git master branches are; there will be no attempt to make old versions available.
 
- - ``/datasets/staging`` contains per-instrument subdirectories with raw files that have been transferred from other systems but have not yet been ingested into the data repository.
+Finally, we propose that all raw ingestion into the shared repository be done with symbolic links to read-only filesystems - the existing ``/lsstdata`` for Rubin Observatory data, and a new ``/external-raw`` filesystem for raw data from other instruments.
 
 .. note ::
 
@@ -320,11 +320,11 @@ Within each ``repo_<YYYYMMDD>`` repository directory:
 
  - Production operators will have access to an ``execution`` role that can write to ``runs`` and ``<instrument>/runs`` (usually just used to create an owned subdirectory).
 
- - Production operators and certain CPP team members will have access to a ``calibs`` role that can write to all ``<instrument>/calib`` d (usually just used to create an owned subdirectory).
+ - Production operators and certain CPP team members will have access to a ``calibs`` role that can write to all ``<instrument>/calib`` directories (usually just used to create an owned subdirectory).
 
- - Production operators and Science Pipelines developers who regularly ingest raw data for a particular instrument will have access to per-instrument ``<instrument>_raw`` roles that have write access to the ``<instrument>/raw`` and any auxilliary-data-collection subdirectories (e.g. ``HSC/masks``).  At present, these roles would have to be used directly whenever ingesting new raws, not just to create subdirectories for them, but we may be able to improve this in the future.
+ - Production operators and Science Pipelines developers who regularly ingest raw data for one or more instruments will have access to per-instrument ``<instrument>_raw`` roles that have write access to the ``<instrument>/raw`` and any auxilliary-data-collection subdirectories (e.g. ``HSC/masks``).  At present, these roles would have to be used directly whenever ingesting new raws, not just to create subdirectories for them, but we may be able to improve this in the future.  For external instruments, this role would also ideally provide a way to get write access (at least for writing new files) to the ``/external-raw`` filesystem (though not necessarily at that mount point).
 
- - All production operators and science pipelines developers have access to the ``auxilliaries`` role, which provides write access to the ``refcats`` and ``skymap`` directores.  This role is used to create per-ticket subdirectories in ``refcats`` prior to starting work on ingesting a new reference catalog, and used directly to run ``butler registry-skymaps``.
+ - All production operators and science pipelines developers have access to the ``auxilliaries`` role, which provides write access to the ``refcats`` and ``skymap`` directores.  This role is used to create per-ticket subdirectories in ``refcats`` prior to starting work on ingesting a new reference catalog, and used directly to run ``butler register-skymap``.
 
 In addition to these filesystem-level controls, we also plan to provide some *informal* protections based on the the same roles in the butler client: the ``Butler`` and ``Registry`` classes (and associated command-line tools) will accept a ``role`` argument that permits write operations on collections with certain associated prefixes.
 The default role is the user's unix username, which provides write access only to ``u/<user>`` collections.
@@ -338,8 +338,8 @@ These guards against careless fingers, not careless brains - we will not attempt
 
    This proposal makes no objection to having a separate ``/project`` filesystem for files.
    But using ``/project`` and symlinks as a way to work around restrictions on write access to appropriate subsets of ``/datasets`` is just that - a workaround - and one that makes it more difficult than it ought to be to find things.
-   If filesystem-level controls (or quotas, etc.) really are necessary, I think this is something we can tolerate, but regular directory permission controls within ``/datasets`` would be preferable.
-   At the very least, we should ensure that::
+   If filesystem-level controls (or quotas, etc.) really are necessary even for ``/datasets`` (note that we already allow for filesystem-level controls by symlinking raws from ``/lsstdata`` and ``/external-raw``), I think this is something we can tolerate, but regular directory permission controls within ``/datasets`` would be preferable.
+   If we do use symlinks from ``/project``, we should at least ensure that a::
 
        /datasets/repo/u/<user> -> /project/<user>/.datarepo
 
@@ -365,7 +365,7 @@ Notable omissions and future work
 
 Collections that represent fields of particular interest or regularly-reprocessed test datasets are not described here, because those are conceptually more groups of data IDs than groups of raws (e.g. not just raw exposures, but tracts on which to combine them as well).
 As in Gen2, we will continue to record the definitions of these groups outside the data repository itself, though we may add support for in-repository storage to Gen3 in the future.
-It is also worth noting that exposure or visit metadata can sometimes be used to help select some of these data IDs (e.g. ``visit.target_name='SSP-Wide``), and these selections are automatically combined with the filters of a ``<instrument>/raw/good`` input collection.
+It is also worth noting that exposure or visit metadata can sometimes be used to help select some of these data IDs (e.g. ``visit.target_name='SSP-Wide``), and these selections are automatically combined with the selection of a ``<instrument>/raw/good`` input collection.
 
 
 Naming conventions for dataset types
