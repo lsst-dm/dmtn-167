@@ -289,7 +289,7 @@ Finally, we propose that all raw ingestion into the shared repository be done wi
 .. _access-controls:
 
 Access Controls
----------------
+===============
 
 The current Gen3 registry architecture does not allow any fine-grained access control in the repository database; we instead rely on "friendly users" being careful and respectful of this shared space.
 
