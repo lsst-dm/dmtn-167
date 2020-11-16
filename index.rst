@@ -135,11 +135,11 @@ SkyMap definitions
 ------------------
 
 All skymaps must have a globally unique name in Gen3, which is used as part of the data ID for any dataset that is defined on tracts.
-The skymap definition datasets (e.g. ``deepCoadd_skyMap``) also include this globally unique name in their data IDs, and hence can also all go in a single ``skymaps`` collection.
+The skymap definition datasets (i.e. ``lsst.skymap.BaseSkyMap`` subclass instances in Python) also include this globally unique name in their data IDs, and hence can also all go in a single ``skymaps`` collection.
 This is simply a ``RUN`` collection that holds skymap definition datasets directly.
 
-The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is something of a relic of Gen2, but one we do not plan to remove until Gen2 is fully removed.
-The new globally-unique skymap data ID names are both necessary and sufficient for Gen3, and in the future we may not store skymap definitions in datasets at all, since they must be at least partially defined in the database as well.
+The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is a relic of Gen2 that will soon be removed entirely from Gen3; all skymap definition file will just use the ``skyMap`` dataset type.
+The new globally-unique skymap data ID names are both necessary and sufficient for uniqueness in Gen3.
 
 SkyMap registration is something we expect to be rare in Gen3 - *much* more rare than running ``makeSkyMap.py`` was in Gen2 - because we almost always use one of a few standard SkyMaps, and in Gen3 a SkyMap (a combination of a ``lsst.skymap.BaseSkyMap`` class *and* its configuration) can only be registered once.
 While this may not be true for discrete SkyMaps in particular, which cover only a small part of the sky and are *conceptually* a bit more per-user, our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
