@@ -104,7 +104,11 @@ These should have names of the form ``<instrument>/calib/<ticket>``, and we will
 
    ``CALIBRATION`` collections that are not candidates for broad use (e.g. because they represent experimental work on a development branch) should instead start with ``u/<user>``, as described in :ref:`collections-developer-processing-outputs`.
 
-Finally, for convenience, we will define per-instrument ``CHAINED`` collections that aggregate the recommended raws (``<instrument>/raw/good``), recommended calibrations (``<instrument>/calib``), and auxiliary collections (``refcats`` and ``skymaps``; see :ref:`collections-reference-catalogs` and :ref:`collections-skymap-definitions`, respectively), with names of the form ``<instrument>/defaults``).
+Finally, for convenience, we will define per-instrument ``CHAINED`` collections with names of the form ``<instrument>/defaults`` that aggregate:
+
+- the recommended raws for that instrument (``<instrument>/raw/good``),
+- the recommended calibrations for that instrument (``<instrument>/calib``),
+- and cross-instrument auxiliary collections (``refcats`` and ``skymaps``; see :ref:`collections-reference-catalogs` and :ref:`collections-skymap-definitions`, respectively).
 
 .. _lsst.obs.base.Instrument: https://pipelines.lsst.io/v/weekly/py-api/lsst.obs.base.Instrument.html#lsst.obs.base.Instrument
 
@@ -125,9 +129,9 @@ Reference catalogs
 ------------------
 
 External reference catalogs reformatted and sharded by DM code are written to ``refcats/<ticket>`` ``RUN`` collections, where ``<ticket>`` is the ticket on which the reformatting and sharding work was performed.
-After a reference catalog has been validated, its ``RUN`` added to the overall ``refcats`` ``CHAINED`` collection.
+After a reference catalog has been validated, its ``RUN`` is added to the overall ``refcats`` ``CHAINED`` collection.
 
-Different collections for different reference catalogs are not necessary, as the name of a reference catalog (e.g. ``ps1_pv3_3pi_20170110``) is used directly as its dataset type name (note that this was not the case in Gen2, but there the reference catalog name was part of its data ID).
+Different collections for different reference catalogs are not necessary, as the name of a reference catalog (e.g. ``ps1_pv3_3pi_20170110``) is used directly as its dataset type name (note that this was not the case in Gen2, where the reference catalog name was instead part of the data ID).
 
 .. _collections-skymap-definitions:
 
@@ -138,11 +142,11 @@ All skymaps must have a globally unique name in Gen3, which is used as part of t
 The skymap definition datasets (i.e. ``lsst.skymap.BaseSkyMap`` subclass instances in Python) also include this globally unique name in their data IDs, and hence can also all go in a single ``skymaps`` collection.
 This is simply a ``RUN`` collection that holds skymap definition datasets directly.
 
-The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is a relic of Gen2 that will soon be removed entirely from Gen3; all skymap definition file will just use the ``skyMap`` dataset type.
+The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is a relic of Gen2 that will soon be removed entirely from Gen3; all skymap definition datasets will just use the ``skyMap`` dataset type.
 The new globally-unique skymap data ID names are both necessary and sufficient for uniqueness in Gen3.
 
 SkyMap registration is something we expect to be rare in Gen3 - *much* more rare than running ``makeSkyMap.py`` was in Gen2 - because we almost always use one of a few standard SkyMaps, and in Gen3 a SkyMap (a combination of a ``lsst.skymap.BaseSkyMap`` class *and* its configuration) can only be registered once.
-While this may not be true for discrete SkyMaps in particular, which cover only a small part of the sky and are *conceptually* a bit more per-user, our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
+Discrete SkyMaps, which typically cover only a small part of the sky and are *conceptually* a bit more per-user, maybe less rare, but our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
 
 .. _collections-shared-official-processing-outputs:
 
@@ -157,7 +161,7 @@ Of course, the version in the collection name should differ as little as possibl
 These names should always correspond to a "public" ``CHAINED`` collection that aggregates both all ``RUN`` collections that directly hold outputs and all collections used as inputs.
 The organization of those "private" output ``RUN`` collections (if there is more than one) is completely at operator discretion, though these collections should start with the same prefix as the umbrella ``CHAINED`` collection, followed by a slash.
 
-In cases where one or more private ``RUN`` collections contain datasets that should not be considered part of the final public outputs (e.g. because they are superceded by datasets in other private ``RUN`` collection(s), a ``TAGGED`` collection can be used to screen and aggregate these.
+In cases where one or more private ``RUN`` collections contain datasets that should not be considered part of the final public outputs (e.g. because they are superceded by datasets in other private ``RUN`` collections), a ``TAGGED`` collection can be used to screen and aggregate these.
 That ``TAGGED`` collection would then be a direct child of the final public ``CHAINED`` collection, instead of any ``RUN`` collections it references.
 
 .. note::
@@ -168,16 +172,16 @@ That ``TAGGED`` collection would then be a direct child of the final public ``CH
 .. note::
 
    These public ``CHAINED`` collections essentially mimic Gen2's "parent link" mechanism, which provides at best approximate coarse-grained provenance information about which datasets were used as inputs when producing others.
-   The Gen3 repository will eventually be extended to include fine-grained, exact provenance - essentially a serialization of the directed acyclic graph (DAG) that describes the processing).
+   The Gen3 repository will eventually be extended to include fine-grained, exact provenance - essentially a serialization of the directed acyclic graph (DAG) that describes the processing.
    Whether queries against that DAG are fast enough to allow this more rigorous provenance information to be used as a type of collection (replacing some usage of ``TAGGED`` and ``CHAINED`` collections) remains to be seen, however.
-   It is also worth noting that in general the full DAG does not maintain the usual collection invariant of having only one dataset with a particular dataset type and data ID (e.g. two calexps with the same data ID, from two differently-configured runs, could each contribute to different coadd patches in a downstream run).
+   It is also worth noting that in general the full DAG does not maintain the usual collection invariant of having only one dataset with a particular dataset type and data ID (e.g. two calexps with the same data ID, from two differently-configured runs, could each contribute to different, non-conflicting coadd patches in downstream runs).
 
 .. _collections-developer-processing-outputs:
 
 Developer processing outputs
 ----------------------------
 
-Processing initiated by DM developers that are intented primarily for personal or small-group use must start with ``u/<user>`` (e.g. ``u/jbosch``), and are strongly encouraged to start with ``u/<user>/<ticket>`` (e.g. ``u/jbosch/DM-56789``) whenever possible.
+Processing initiated by DM developers that are intended primarily for personal or small-group use must start with ``u/<user>`` (e.g. ``u/jbosch``), and are strongly encouraged to start with ``u/<user>/<ticket>`` (e.g. ``u/jbosch/DM-56789``) whenever possible.
 Names and structure after this prefix are at user discretion, but we strongly recommend using a combination of ``CHAINED`` collections and ``RUN`` collections to distinguish between "inputs and outputs" collections and "output only" collections, as in :ref:`collections-shared-official-processing-outputs`.
 The ``pipetask`` tool will automatically take care of this if the ``--output`` option is used with or instead of the ``--output-run`` option.
 
@@ -190,7 +194,7 @@ The ``pipetask`` tool will automatically take care of this if the ``--output`` o
 Calibration production
 ----------------------
 
-Calibration products production runs intended for broad use (i.e. outputs will be at least candidates for membership in the recommended calibration collection for this instrument) should output to collections with names that start with ``<instrument>/calib/<ticket>/``.
+Calibration production runs intended for broad use (i.e. outputs will be at least candidates for membership in the recommended calibration collection for this instrument) should output to collections with names that start with ``<instrument>/calib/<ticket>/``.
 Those produced for experimental or development purposes should start with ``u/<user>/<ticket>/``.
 
 In either case, the ``RUN`` collections that hold output datasets directly will usually require another disambiguating term, mapping roughly to the expected validity range epoch.
@@ -198,45 +202,47 @@ Actual validity ranges are not assigned until datasets are certified (i.e. added
 
 .. note::
 
-   **TODO**: We should resolve this ambiguity about what the last term should be in calibration production collections by the end of the RFC discussion period.
+   **TODO**: We should resolve this uncertainty about what the last term should be in calibration production collections by the end of the RFC discussion period.
    Gen2 used a "CalibDate", which I have always found a bit vague.
    Some hash of input IDs seems a bit better, but it would need to be computed by external code, because we need the output collection name before we start processing (and also because the user probably wants it in some file before they launch any jobs, so they can easily look up what hashes mean).
    Either should probably be combined with the timestamp suffixes that ``pipetask`` can automatically add to avoid clashes (especially differences to due e.g. configuration rather than inputs).
 
-As noted in :ref:`collections-per-instrument`, certified calibration products intended for broad should go in ``CALIBRATION`` collections named _just_ ``<instrument>/calib/<ticket>``.
-``CALIBRATION`` collections can also of course be nested under ``u/<user>/<ticket>``, but may not always be necessary, because a ``RUN`` collection directly containing e.g. new ``bias`` datasets can also be used as an input to a processing run that generates new ``flat`` datasets (as long as only one calibration epoch is in play).
+As noted in :ref:`collections-per-instrument`, certified calibration products intended for broad use should go in ``CALIBRATION`` collections named *just* ``<instrument>/calib/<ticket>``.
+``CALIBRATION`` collections can also of course be nested under ``u/<user>/<ticket>``, but may not always be necessary for development work, because a ``RUN`` or ``CHAINED`` collection directly containing e.g. new ``bias`` datasets can also be used as an input to a processing run that generates new ``flat`` datasets (as long as only one calibration epoch is in play).
 
 .. note::
 
-   **TODO**: While the middleware _can_ use ``RUN`` collections as inputs to later CPP processing steps, it's up to the CPP team whether they want to permit that or always certify between steps as a matter of policy.
+   **TODO**: While the middleware *can* use ``RUN`` collections as inputs to later CPP processing steps, it's up to the CPP team whether they want to permit that, with the alternative being to always certify between steps as a matter of policy.
    We should resolve this question by the end of the RFC discussion period.
 
 .. note::
 
-   "Curated" calibration datasets that are written from a source-of-truth in an ``obs_*_data`` git repository (rather than generated directly via pipeline process) are currently being written to ``RUN`` collections with names of the form ``<instrument>/calib/curated/<calibDate>``, which are then ingested directly into an ``<instrument>/calib`` ``CALIBRATION`` collection (which clashes with our proposal earlier to make ``<instrument>/calib`` a ``CHAINED`` collection "pointer").
+   "Curated" calibration datasets that are written from a source-of-truth in an ``obs_*_data`` git repository (rather than generated directly via pipeline processing) are currently written to ``RUN`` collections with names of the form ``<instrument>/calib/curated/<calibDate>``, which are then ingested directly into an ``<instrument>/calib`` ``CALIBRATION`` collection (which clashes with our proposal earlier to make ``<instrument>/calib`` a ``CHAINED`` collection "pointer").
 
    The full workflow for curated calibrations is sufficiently unclear that it is unlikely that we will get this right in time for the first long-lived Gen3 repository.
-   For this first repository, our proposal is to use ``RUN`` collections of the form ``<instrument>/calib/<ticket>/curated/<calibDate>``, and a ``CALIBRATION`` collection of the form ``<instrument>/calib/<ticket>`` (which would generally hold non-curated calibrations as well).
+   Initially, our proposal is to use ``RUN`` collections of the form ``<instrument>/calib/<ticket>/curated/<calibDate>``, and a ``CALIBRATION`` collection of the form ``<instrument>/calib/<ticket>`` (which would in general hold non-curated calibrations as well).
+   This leaves room for multiple curated calibration ingests to coexist, which is necessary because they will improve over time, but we don't want to assume we can remove old ones.
+   It does not provide a way to avoid duplication of curated calibration datasets that have not changed.
 
-   Calibration collections created by converting the default Gen2 calibration repo for an instrument will use a "gen2/defaults" label where ``<ticket>`` would appear in future pure-Gen3 collections.
+   Calibration collections created by converting the default Gen2 calibration repo for an instrument will use ``gen2/defaults`` instead of ``<ticket>``, i.e. ``<instrument>/calib/gen2/defaults`` for the ``CALIBRATION`` collection.
 
 
 Filesystem locations
 ====================
 
 The main shared data repository for all instruments at NCSA will have a public repository root of ``/datasets/repo``, which will be a symlink to a directory of the form ``/datasets/repo_<YYYYMMDD>``.
-These directories will each contain a ``butler.repo`` yaml that points to the appropriate database (with a one-to-one correspondance between databases or database schemas and ``repo_<YYYYMMDD>`` directories).
+These directories will each contain a ``butler.yaml`` file that points to the appropriate database (with a one-to-one correspondance between databases or database schemas and ``repo_<YYYYMMDD>`` directories).
 
 The default (POSIX) datastore will write datasets with templates that begin with the ``RUN`` name, resulting in e.g. the datasets of per-instrument ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/<instrument>/`` and per-user ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/u/<user>``.
-Users are discouraged from inspecting these directories (as this will be at least quite different in the IDF or other future cloud-based datastores), and _strongly_ discouraged from modifying them in any way other than via middleware tools.
+Users are discouraged from inspecting these directories (as this will be at least quite different in the IDF or other future cloud-based datastores), and *strongly* discouraged from modifying them in any way other than via middleware tools.
 In many cases, write access will actually be prohibited (see :ref:`access-controls`).
 
-When migrations are necessary due to changes in the repository format (something that is _always_ preceded by an RFC with explicit CCB approval), a new ``repo_<YYYYMMDD>`` directory and database/schema pair will be created, and files will shared via hard links until/unless the old repository is retired.
+When migrations are necessary due to changes in the repository format (something that is *always* preceded by an RFC with explicit CCB approval), a new ``repo_<YYYYMMDD>`` directory and database/schema pair will be created, and files will shared via hard links until/unless the old repository is retired.
 
 .. note::
 
-   **TODO**: are hard links viable here from a sysadmin/GPFS perspective?
-   They certainly would make things easier.
+   **TODO**: Are hard links viable here from a sysadmin/GPFS perspective?
+   They certainly would make things easier, because they'd let each repository have its own file without actual duplicationof storage.  Note that Gen3 treats datasets as completely atomic and immutable (aside from deletion), so there is no chance of one repository updating another unexpectedly via hard links.
 
 We will also designate two other non-repository subdirectories of ``/datasets`` for specific roles:
 
@@ -244,11 +250,11 @@ We will also designate two other non-repository subdirectories of ``/datasets`` 
 
  - ``/datasets/testing`` holds git LFS repositories that are used in CI and rarely change.  These are provided for convenience, and should be updated when their git master branches are; there will be no attempt to make old versions available.
 
-Finally, we propose that all raw ingestion into the shared repository be done with symbolic links to read-only filesystems - the existing ``/lsstdata`` for Rubin Observatory data, and a new ``/external-raw`` filesystem for raw data from other instruments.
+Finally, we propose that all raw ingestion into the shared repository be done with symbolic links or in-place (outside-root) ingests, pointing to read-only filesystems - the existing ``/lsstdata`` for Rubin Observatory data, and a new ``/external-raw`` filesystem for raw data from other instruments.
 
 .. note ::
 
-   **TODO**: This document should say something about staging locations for (at least) raws that haven't been ingested yet, for both Rubin Observatory instruments and precursor instruments (which I imagine might be quite different in this respect).  I'm not a good person to do that.
+   **TODO**: This document should probably say more about staging locations for (at least) raws that haven't been ingested yet, for both Rubin Observatory instruments and precursor instruments (which I imagine might be quite different in this respect).  I'd like to at least be confident that the filesystem locations and permissions I'm proposing are consistent with how data arrives and gets ingested.  I don't know enough to write that up myself.
 
 .. _access-controls:
 
@@ -257,17 +263,17 @@ Access Controls
 
 The current Gen3 registry architecture does not allow any fine-grained access control in the repository database; we instead rely on "friendly users" being careful and respectful of this shared space.
 
-At the same time, we will use filesystem access controls to protect shared and per-user files, and we plan to implement some checks in the Butler client itself to make it at least extremely difficult to _accidentally_ cause problems.
+At the same time, we will use filesystem access controls to protect shared and per-user files, and we plan to implement some checks in the Butler client itself to make it at least extremely difficult to *accidentally* cause problems.
 
 .. warning::
 
    NEVER use ``psql`` or other direct-SQL clients (e.g. the Python DBAPI or SQLAlchemy) to perform write operations in the repository database.
    These can corrupt the data repository, and we have essentially no way to guard against them.
 
-   It should not be necessary in the long term to ever use direct SQL access even for read access; the SQL schema is _not_ considered a public interface - but we recognize that this may be necessary for debugging for a while.
+   It should not be necessary in the long term to ever use direct SQL access even for read access; the SQL schema is *not* considered a public interface - but we recognize that this may be necessary for debugging for a while.
    This can be ensured by running::
 
-      SET SESSION CHARACTERISTICS AS TRANSACTION;
+      SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
 
    at the start of the session.
 
@@ -286,9 +292,9 @@ Within each ``repo_<YYYYMMDD>`` repository directory:
 
  - Production operators and certain CPP team members will have access to a ``calibs`` role that can write to all ``<instrument>/calib`` directories (usually just used to create an owned subdirectory).
 
- - Production operators and Science Pipelines developers who regularly ingest raw data for one or more instruments will have access to per-instrument ``<instrument>_raw`` roles that have write access to the ``<instrument>/raw`` and any auxiliary-data-collection subdirectories (e.g. ``HSC/masks``).  At present, these roles would have to be used directly whenever ingesting new raws, not just to create subdirectories for them, but we may be able to improve this in the future.  For external instruments, this role would also ideally provide a way to get write access (at least for writing new files) to the ``/external-raw`` filesystem (though not necessarily at that mount point).
+ - Production operators and science pipelines developers who regularly ingest raw data for one or more instruments will have access to per-instrument ``<instrument>_raw`` roles that have write access to the ``<instrument>/raw`` and any auxiliary-data-collection subdirectories (e.g. ``HSC/masks``).  At present, these roles would have to be used directly whenever ingesting new raws, not just to create subdirectories for them, but we may be able to improve this in the future.  For external instruments, this role would also ideally provide a way to get write access (at least for writing new files) to the ``/external-raw`` filesystem (though not necessarily at that mount point).
 
- - All production operators and science pipelines developers have access to the ``auxilliaries`` role, which provides write access to the ``refcats`` and ``skymap`` directores.  This role is used to create per-ticket subdirectories in ``refcats`` prior to starting work on ingesting a new reference catalog, and used directly to run ``butler register-skymap``.
+ - All production operators and science pipelines developers have access to the ``auxiliaries`` role, which provides write access to the ``refcats`` and ``skymap`` directores.  This role is used to create per-ticket subdirectories in ``refcats`` prior to starting work on ingesting a new reference catalog, and used directly to run ``butler register-skymap``.
 
 In addition to these filesystem-level controls, we also plan to provide some *informal* protections based on the the same roles in the butler client: the ``Butler`` and ``Registry`` classes (and associated command-line tools) will accept a ``role`` argument that permits write operations on collections with certain associated prefixes.
 The default role is the user's unix username, which provides write access only to ``u/<user>`` collections.
@@ -327,9 +333,9 @@ Notable omissions and future work
 "Collections" of data IDs
 -------------------------
 
-Collections that represent fields of particular interest or regularly-reprocessed test datasets are not described here, because those are conceptually more groups of data IDs than groups of raws (e.g. not just raw exposures, but tracts on which to combine them as well).
-As in Gen2, we will continue to record the definitions of these groups outside the data repository itself, though we may add support for in-repository storage to Gen3 in the future.
-It is also worth noting that exposure or visit metadata can sometimes be used to help select some of these data IDs (e.g. ``visit.target_name='SSP-Wide``), and these selections are automatically combined with the selection of a ``<instrument>/raw/good`` input collection.
+Collections that represent fields of particular interest or regularly-reprocessed test datasets are not described here, because those are conceptually more groups of data IDs than groups of datasets (e.g. not just raw exposures, but tracts on which to combine them as well).
+As in Gen2, we will continue to record the definitions of these groups outside the data repository itself, though we may add support for in-repository storage of data IDs to Gen3 in the future.
+It is also worth noting that exposure or visit metadata can sometimes be used to help select some of these data IDs (e.g. ``visit.target_name='SSP-Wide'``), and these selections are automatically combined with the selection of a ``<instrument>/raw/good`` input collection.
 
 
 Naming conventions for dataset types
@@ -349,11 +355,11 @@ Provenance and Reproducibility
 The plan for provenance in the Gen3 butler is centered around storing the directed acyclic graph (DAG) of datasets and processing "quanta" that is used to drive ``PipelineTask`` execution, after updating it with the unique identifiers of the datasets actually produced and annotating it with information about which input datasets are actually used by the (rare) ``PipelineTasks`` that may not use all predicted inputs.
 While some provenance information (e.g. software versions and configurations) are currently associated directly with ``RUN`` collections (and this information, at least, may always be), and ``CHAINED`` collections provide some information about what datasets were used as inputs when creating others (see :ref:`collections-shared-official-processing-outputs`), these do not carry sufficiently detailed information about the relationships between datasets to meet our needs.
 
-Using that provenance information to exactly reprocess a DAG is actually quite different from starting a new run "from scratch", and it doesn't involve providing collections or data IDs as inputs - the datasets are already fully resolved, so there is no need to search for them in collections, and the data IDs are intrinsic to those datasets.
+Using fine-grained provenance information to exactly reprocess a DAG will actually be quite different from starting a new run "from scratch", as it doesn't involve providing collections or data IDs as inputs - the input datasets are already fully resolved, so there is no need to search for them in collections, and the data IDs are intrinsic to those datasets.
 We will also need to provide ways to *almost* exactly reprocess a DAG, of course - e.g. replacing the initial resolved datasets with new collection + data ID searches, modifying ``Task`` configuration in a way that does not change the DAG (or changes it only in a limited sense), and probably more.
 
-All of this fine-grained provenance is not yet implemented, however, so at present the only way to guarantee reproducibility is for all input collections to have exactly the same state they had when the original run was performed.
-The standard collections defined in this document are poorly suited for this role, however; we consider it more important that these track the "current best" (or in the case of raws, recent observations) than remain immutable.
+All of this fine-grained provenance is not yet implemented, however, and at present the only way to guarantee reproducibility is for all input collections to have exactly the same state they had when the original run was performed.
+The standard collections defined in this document are poorly suited for this role, however; we consider it more important for these to track the "current best" (or in the case of raws, recent observations) than it is for them remain immutable.
 Users should thus be aware that repeated processing runs using the same input collections (and everything else held constant) are *not* intended to always produce the same results (and this is a feature, not a bug).
 
 
