@@ -88,7 +88,7 @@ Raw and calibration data associated with a particular instrument is organized in
 The naming conventions for these collections are codified by the `lsst.obs.base.Instrument`_ class's ``make*Name`` methods.
 The highest-level collections are always defined as ``CHAINED`` collection "pointers" to other versioned collections.
 
-In the case of raw data, we propose three levels of collections:
+In the case of raw data (including both science observations and raw calibrations), we propose three levels of collections:
 
  - ``<instrument>/raw/all``: the ``RUN`` collection into which all raws for that instrument are originally ingested.
  - ``<instrument>/raw/good/<ticket>``: a ``TAGGED`` collection containing a curated subset of all raws that do not contain problems (e.g. tracking issues, airplanes, etc.), named according to the ticket (e.g. ``DM-98765``) on which the curation work was done.
@@ -123,6 +123,8 @@ By analogy with raw and calibration data, these will be stored in a ``HSC/masks/
 While it is somewhat unlikely that we will ever add older mask versions or new masks in the same form to LSST data repositories (LSST processing is moving to a different approach to these masks, and HSC will probably follow suit), this gives us a clear place to put them without naming conflicts.
 The top-level ``HSC/defaults`` collection will include ``HSC/masks`` as well.
 
+This of course establishes a precedent for other instrument-specific auxiliary data, but we expect this to be sufficiently rare new cases probably merit their own RFCs.
+
 .. _collections-reference-catalogs:
 
 Reference catalogs
@@ -146,7 +148,7 @@ The existence of different skymap definition datasets for different coadd types 
 The new globally-unique skymap data ID names are both necessary and sufficient for uniqueness in Gen3.
 
 SkyMap registration is something we expect to be rare in Gen3 - *much* more rare than running ``makeSkyMap.py`` was in Gen2 - because we almost always use one of a few standard SkyMaps, and in Gen3 a SkyMap (a combination of a ``lsst.skymap.BaseSkyMap`` class *and* its configuration) can only be registered once.
-Discrete SkyMaps, which typically cover only a small part of the sky and are *conceptually* a bit more per-user, maybe less rare, but our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
+Discrete SkyMaps, which typically cover only a small part of the sky and are *conceptually* a bit more per-user, may be less rare, but our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
 
 .. _collections-shared-official-processing-outputs:
 
@@ -205,7 +207,7 @@ Actual validity ranges are not assigned until datasets are certified (i.e. added
    **TODO**: We should resolve this uncertainty about what the last term should be in calibration production collections by the end of the RFC discussion period.
    Gen2 used a "CalibDate", which I have always found a bit vague.
    Some hash of input IDs seems a bit better, but it would need to be computed by external code, because we need the output collection name before we start processing (and also because the user probably wants it in some file before they launch any jobs, so they can easily look up what hashes mean).
-   Either should probably be combined with the timestamp suffixes that ``pipetask`` can automatically add to avoid clashes (especially differences to due e.g. configuration rather than inputs).
+   Either should probably be combined with the timestamp suffixes that ``pipetask`` can automatically add to avoid clashes (especially differences  due to e.g. configuration rather than inputs).
 
 As noted in :ref:`collections-per-instrument`, certified calibration products intended for broad use should go in ``CALIBRATION`` collections named *just* ``<instrument>/calib/<ticket>``.
 ``CALIBRATION`` collections can also of course be nested under ``u/<user>/<ticket>``, but may not always be necessary for development work, because a ``RUN`` or ``CHAINED`` collection directly containing e.g. new ``bias`` datasets can also be used as an input to a processing run that generates new ``flat`` datasets (as long as only one calibration epoch is in play).
