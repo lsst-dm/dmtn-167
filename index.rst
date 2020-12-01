@@ -11,7 +11,12 @@
 
    **This technote represents a policy proposal that has not yet been adopted.**
 
-While the Gen3 Butler provides some intrinsic structure to its data repositories, considerably more is left to convention (often encoded in higher-level packages, like obs_base).  This document will be - at least at first - a proposal for how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.  The immediate focus will be the environment at NCSA, but it is hoped that much of this will hold for the IDF and USDF as well.
+While the Gen3 Butler provides some intrinsic structure to its data repositories, considerably more is left to convention (often encoded in higher-level packages, like obs_base).
+This document will be - at least at first - a proposal for how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.
+The immediate focus will be the environment at NCSA, but it is hoped that much of this will hold for the IDF and USDF as well.
+A core assumption is that there will be _one_ large shared data repository for all instruments at NCSA (and each other major facility), for "friendly" use by the DM team.
+Smaller custom data repositories may also exist (especially for CI), but we hope to ensure that nearly all development work can be performed without the need for developers to ever create their own personal repositories.
+One or more large shared repositories for science users are also expected to exist, but are explicitly beyond the scope of this proposal.
 
 After consultation with other stakeholders and ultimately RFC, at least some of the content here should probably be moved to the DM Developer Guide.
 
@@ -25,7 +30,7 @@ There are several types of collections, which are quite different in how they ho
 A full description of the types of collections can be found in the `daf_butler documentation`_, but a brief summary here should be sufficient for the proposals in this document:
 
 - A ``RUN`` collection (or just "a run") is the only type of collection that is intrinsic to a dataset - a dataset is added to ``RUN`` collection when it is first added to a repository, and remains in that ``RUN`` collection until/unless it is deleted entirely.
-- A ``CHAINED`` collection is simply an ordered list of other collections to search.  These can be nested arbitrarily (but cycles are of course not permitted), and may be redefined after creation.  A single-element ``CHAINED`` collection can thus be used as a sort of symbolic link, providing a stable name for a conceptual group of datasets whose definition may change over time.
+- A ``CHAINED`` collection is an ordered list of other collections to search.  These can be nested arbitrarily (but cycles are of course not permitted), and may be redefined after creation.  A single-element ``CHAINED`` collection can thus be used as a sort of symbolic link, providing a stable name for a conceptual group of datasets whose definition may change over time.
 - A ``TAGGED`` collection is an explict list of individual datasets.
 - A ``CALIBRATION`` collection is an explict list of (dataset, validity range) tuples, where the validity range is a timespan.
 
@@ -142,7 +147,7 @@ SkyMap definitions
 
 All skymaps must have a globally unique name in Gen3, which is used as part of the data ID for any dataset that is defined on tracts.
 The skymap definition datasets (i.e. ``lsst.skymap.BaseSkyMap`` subclass instances in Python) also include this globally unique name in their data IDs, and hence can also all go in a single ``skymaps`` collection.
-This is simply a ``RUN`` collection that holds skymap definition datasets directly.
+This is a ``RUN`` collection that holds skymap definition datasets directly.
 
 The existence of different skymap definition datasets for different coadd types (``goodSeeingCoadd_skyMap``, etc.) is a relic of Gen2 that will soon be removed entirely from Gen3; all skymap definition datasets will just use the ``skyMap`` dataset type.
 The new globally-unique skymap data ID names are both necessary and sufficient for uniqueness in Gen3.
