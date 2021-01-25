@@ -15,6 +15,10 @@ While the Gen3 Butler provides some intrinsic structure to its data repositories
 This document will be - at least at first - a proposal for how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.
 The immediate focus will be the environment at NCSA, but it is hoped that much of this will hold for the IDF and USDF as well.
 A core assumption is that there will be a very small number of large shared data repositories for all instruments at NCSA (and each other major facility), for "friendly" use by the DM team; in particular, we will have one data repository for all real (non-simulated) data.
+
+Shared repositories insulate most users from having to worry about raw ingest, calibrations, references, and (now) even skymap definition.
+In Gen3, including data from multiple instruments in the same data repository opens up processing data from those instruments together (albeit with careful control over configuration, as our usual obs-package overrides may not work), and allows them to directly share reference catalogs and skymaps.
+
 Smaller custom data repositories may also exist (especially for CI), but we hope to ensure that nearly all development work can be performed without the need for developers to ever create their own personal repositories.
 One or more large shared repositories for science users are also expected to exist, but are explicitly beyond the scope of this proposal.
 
@@ -165,7 +169,7 @@ By analogy with raw and calibration data, these will be stored in a ``HSC/masks/
 While it is somewhat unlikely that we will ever add older mask versions or new masks in the same form to LSST data repositories (LSST processing is moving to a different approach to these masks, and HSC will probably follow suit), this gives us a clear place to put them without naming conflicts.
 The top-level ``HSC/defaults`` collection will include ``HSC/masks`` as well.
 
-This of course establishes a precedent for other instrument-specific auxiliary data, but we expect this to be sufficiently rare new cases probably merit their own RFCs.
+This of course establishes a precedent for other instrument-specific auxiliary data, but we expect this to be sufficiently rare that new cases probably merit their own RFCs.
 
 .. _collections-in-dc2:
 
@@ -212,10 +216,29 @@ These versions are intended to make it easy for users to browse collections and 
 Of course, the version in the collection name should differ as little as possible from the versions actually used to reduce confusion.
 
 These names should always correspond to a "public" ``CHAINED`` collection that aggregates both all ``RUN`` collections that directly hold outputs and all collections used as inputs.
-The organization of those "private" output ``RUN`` collections (if there is more than one) is completely at operator discretion, though these collections should start with the same prefix as the umbrella ``CHAINED`` collection, followed by a slash.
+The organization of those "private" output ``RUN`` collections (if there is more than one) is completely at operator discretion (they may correspond to e.g. different tracts, different stages of processing, different attempts), but these collections should start with the same prefix as the umbrella ``CHAINED`` collection, followed by a slash.
 
 In cases where one or more private ``RUN`` collections contain datasets that should not be considered part of the final public outputs (e.g. because they are superceded by datasets in other private ``RUN`` collections), a ``TAGGED`` collection can be used to screen and aggregate these.
 That ``TAGGED`` collection would then be a direct child of the final public ``CHAINED`` collection, instead of any ``RUN`` collections it references.
+For example, instead of the following chain involving two processing-output ``RUN`` collections (``first`` and ``second``) as well as the input (``HSC/defaults``):
+
+.. code::
+
+   HSC/runs/w_2021_50/DM-20000              CHAINED
+     HSC/runs/w_2021_50/DM-20000/second    RUN
+     HSC/runs/w_2021_50/DM-20000/first     RUN
+     HSC/defaults                          CHAINED
+       (nested input collections)
+
+we would redefine the chain to include a ``TAGGED`` collection (``filtered``)
+that references (at the level of individual datasets) the ``first`` and ``second`` runs, but still include the inputs directly:
+
+.. code::
+
+   HSC/runs/w_2021_50/DM-20000              CHAINED
+     HSC/runs/w_2021_50/DM-20000/filtered  TAGGED
+     HSC/defaults                          CHAINED
+       (nested input collections)
 
 .. note::
 
@@ -317,6 +340,7 @@ Access Controls
 
 The current Gen3 registry architecture does not allow any fine-grained access control in the repository database; we instead rely on "friendly users" being careful and respectful of this shared space.
 The access control rules for most users are extremely simple: do not create, modify, or write datasets to any collection unless it starts with ``u/<user>``.
+References to both shared datasets and collection, and other user's datasets and collections (via ``TAGGED`` and ``CHAINED`` collections) are allowed, but shared collections should not reference personal (``u/<user>``) collections
 
 We may be able to add a small number of guards via database access control systems (specifically PostgreSQL's "row-level security") in the future, but we do not ever plan to make these exhaustive (the long-term plans for butler access control involve a different approach; see `DMTN-163`_).
 Our focus will be limited to the most important shared collections and those easiest to accidentally modify, and the details of these guards are beyond the scope of this document.
