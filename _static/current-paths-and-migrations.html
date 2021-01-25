@@ -1,0 +1,204 @@
+<style type="text/css">
+  .tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;}
+  .tg td{background-color:#fff;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
+    font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
+  .tg th{background-color:#f0f0f0;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
+    font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+  .tg .tg-e7aw{border-color:inherit;font-family:Arial, Helvetica, sans-serif !important;;font-weight:bold;text-align:left;
+    vertical-align:top}
+  .tg .tg-fymr{border-color:inherit;font-weight:bold;text-align:left;vertical-align:top}
+  .tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
+  .tg .tg-9gth{border-color:inherit;font-family:"Courier New", Courier, monospace !important;;text-align:left;vertical-align:top}
+  </style>
+  <table class="tg">
+  <thead>
+    <tr>
+      <th class="tg-e7aw">Path</th>
+      <th class="tg-fymr">Definition</th>
+      <th class="tg-fymr">Action</th>
+      <th class="tg-0pky">Target Gen3 Repo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="tg-9gth">/lsstdata</td>
+      <td class="tg-0pky">All raw Rubin Obs. data</td>
+      <td class="tg-0pky">Ingest contents to Gen3 with in-place transfer.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/refcats</td>
+      <td class="tg-0pky">Gen2 reference catalog root.</td>
+      <td class="tg-0pky">Convert contents to Gen3 with hard-link transfer, retire with Gen2.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/hsc/raws</td>
+      <td class="tg-0pky">HSC raw data</td>
+      <td class="tg-0pky">Convert contents to Gen3 with in-place transfer.<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/hsc/BrightObjectMasks</td>
+      <td class="tg-0pky">HSC externally-produced bright object masks</td>
+      <td class="tg-0pky">Convert contents to Gen3 with in-place transfer.<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/hsc/calib</td>
+      <td class="tg-0pky">HSC externally-produced calibs</td>
+      <td class="tg-0pky">Convert contents to Gen3 with in-place transfer.<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/hsc/repo/rerun</td>
+      <td class="tg-0pky">HSC Gen2 data repository</td>
+      <td class="tg-0pky">Convert contents to Gen3 with hard-link transfer, retire with Gen2.<br>private/$USER subdirectories are skipped, and can be converted manually by users (into u/$USER collections) as desired.<br>Shared reruns will land in collections and subdirectories nested under HSC/runs.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/decam/$DATE</td>
+      <td class="tg-0pky">DECam raw data</td>
+      <td class="tg-0pky">Convert contents to Gen3 with in-place transfer.<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/des_sn/$DATE</td>
+      <td class="tg-0pky">DECam raw data</td>
+      <td class="tg-0pky">Convert contents to Gen3 with in-place transfer.<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/decam/rerun/*</td>
+      <td class="tg-0pky">DECam Gen2 data repositories</td>
+      <td class="tg-0pky">Convert contents to Gen3 with hard-link transfer, retire with Gen2.<br>private/$USER subdirectories are skipped, and can be converted manually by users (into u/$USER collections) as desired.<br>Shared reruns will land in collections and subdirectories nested under DECam/runs.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/des_sn/repo_Y2</td>
+      <td class="tg-0pky">DECam Gen2 data repository</td>
+      <td class="tg-0pky">Convert non-raw contents to Gen3 with hard-link transfer, retire with Gen2.<br>private/$USER subdirectories are skipped, and can be converted manually by users (into u/$USER collections) as desired.<br>Shared reruns will land in collections and subdirectories nested under DECam/runs.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/des_sn/repo_Y3</td>
+      <td class="tg-0pky">DECam Gen2 data repository</td>
+      <td class="tg-0pky">Convert non-raw contents to Gen3 with hard-link transfer, retire with Gen2.<br>private/$USER subdirectories are skipped, and can be converted manually by users (into u/$USER collections) as desired.<br>Shared reruns will land in collections and subdirectories nested under DECam/runs.</td>
+      <td class="tg-9gth">/repo/main</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/DC2/DR6</td>
+      <td class="tg-0pky">External transfer of DESC DC2 raws, auxilliary, and processing for DP0.</td>
+      <td class="tg-0pky">Convert contents to Gen3 (at /datasets/DC2/repo_$DATE) with in-place transfer.</td>
+      <td class="tg-9gth">/repo/DC2</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/DC2/DR6/registry.sqlite3</td>
+      <td class="tg-0pky">Gen2 registry database</td>
+      <td class="tg-0pky">I don't know what this file is doing here; this is not a Gen2 data repository root.  We should delete it or add a README explaining its presence.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/DC2/repo</td>
+      <td class="tg-0pky">DC2 Gen2 data repository</td>
+      <td class="tg-0pky">Rename to /datasets/DC2/repoRun1.2i to reflect contents, then handle like other directories with that name pattern.</td>
+      <td class="tg-9gth">/repo/DC2</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/DC2/raw</td>
+      <td class="tg-0pky">DC2 raws of various versions</td>
+      <td class="tg-0pky">Convert contents to Gen3 with in-place transfer (as needed).<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/DC2</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/DC2/repoRun$X.$Y/rerun</td>
+      <td class="tg-0pky">DC2 Gen2 data repository</td>
+      <td class="tg-0pky">Convert contents to Gen3 with hard-link transfer (as needed), retire with Gen2.</td>
+      <td class="tg-9gth">/repo/DC2</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/DC2/repoRun$X.$Y/CALIB</td>
+      <td class="tg-0pky">DC2 Gen2 data repository</td>
+      <td class="tg-0pky">Ingest contents to Gen3 with in-place transfer (as needed).<br>Consider moving after Gen2 retirement for consistency.</td>
+      <td class="tg-9gth">/repo/DC2</td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/all-sky</td>
+      <td class="tg-0pky">All-sky camera images</td>
+      <td class="tg-0pky">Move to /lsstdata/offline/allsky</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/ctio0m9</td>
+      <td class="tg-0pky">Early LSST sensor data from CTIO 0.9m</td>
+      <td class="tg-0pky">Retire with Gen2 (no Gen3 support for this instrument is planned).</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/gapon</td>
+      <td class="tg-0pky">Qserv test data</td>
+      <td class="tg-0pky">Ignore or relocate.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/lsstCam</td>
+      <td class="tg-0pky">Empty placeholder</td>
+      <td class="tg-0pky">Remove.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/sdss</td>
+      <td class="tg-0pky">SDSS Gen2 data repository and raws</td>
+      <td class="tg-0pky">Retire with Gen2 (no Gen3 support for this instrument is planned).</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/datasets/ts8</td>
+      <td class="tg-0pky">Test stand Gen2 data repository</td>
+      <td class="tg-0pky">Retire with Gen2 (if not in /lsstdata already, fix that).</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/datasets</td>
+      <td class="tg-0pky">Effectively empty</td>
+      <td class="tg-0pky">Remove.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/test</td>
+      <td class="tg-0pky">Effectively empty</td>
+      <td class="tg-0pky">Remove.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/hsc/gen3repo</td>
+      <td class="tg-0pky">Temporary Gen3 data repositories</td>
+      <td class="tg-0pky">Retire after new shared repo has been up for a while.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/hsc_rc</td>
+      <td class="tg-0pky">Effectively empty</td>
+      <td class="tg-0pky">Remove.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/hsc_rc2_reproc</td>
+      <td class="tg-0pky">Effectively empty</td>
+      <td class="tg-0pky">Remove.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/RC</td>
+      <td class="tg-0pky">Effectively empty</td>
+      <td class="tg-0pky">Remove.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+    <tr>
+      <td class="tg-9gth">/project/shared/hsc</td>
+      <td class="tg-0pky">Symlink to /datasets/hsc/repo</td>
+      <td class="tg-0pky">Retire with Gen2.</td>
+      <td class="tg-0pky"></td>
+    </tr>
+  </tbody>
+  </table>

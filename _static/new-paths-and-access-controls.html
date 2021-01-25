@@ -1,0 +1,134 @@
+<style type="text/css">
+    .tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;}
+    .tg td{background-color:#fff;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
+      font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
+    .tg th{background-color:#f0f0f0;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
+      font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+    .tg .tg-juju{font-family:"Courier New", Courier, monospace !important;;text-align:left;vertical-align:top}
+    .tg .tg-0lax{text-align:left;vertical-align:top}
+    </style>
+    <table class="tg">
+    <thead>
+      <tr>
+        <th class="tg-0lax"><span style="font-weight:bold">Path</span></th>
+        <th class="tg-0lax"><span style="font-weight:bold">Definition</span></th>
+        <th class="tg-0lax"><span style="font-weight:bold">Group</span></th>
+        <th class="tg-0lax"><span style="font-weight:bold">Access Controls</span></th>
+        <th class="tg-0lax"><span style="font-weight:bold">Notes</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main</span></td>
+        <td class="tg-juju"><span style="font-weight:normal">-&gt; /repo/main_$BEST</span></td>
+        <td class="tg-0lax"></td>
+        <td class="tg-0lax">Read-only.</td>
+        <td class="tg-0lax">This is a symlink to the latest/best data repository for all non-simulated data.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE</span></td>
+        <td class="tg-0lax">Gen3 data repository for all non-simulated data.</td>
+        <td class="tg-0lax"></td>
+        <td class="tg-0lax">Read-only.</td>
+        <td class="tg-0lax"></td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE/u</span></td>
+        <td class="tg-0lax">Root for personal collections.</td>
+        <td class="tg-0lax"></td>
+        <td class="tg-0lax">All users can create user-owned subdirectories matching their usernames.</td>
+        <td class="tg-0lax">If possible, make username subdirectories recursively world-readable by default, and disable creation of non-username subdirectories or files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE/runs</span></td>
+        <td class="tg-0lax">Root for shared instrument-generic processing outputs.</td>
+        <td class="tg-0lax">operators</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE/$INSTRUMENT/runs</span></td>
+        <td class="tg-0lax">Root for shared instrument-specific processing outputs.</td>
+        <td class="tg-0lax">operators</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE/$INSTRUMENT/calib</span></td>
+        <td class="tg-0lax">Root for shared calibration production outputs.</td>
+        <td class="tg-0lax">cpp</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE/refcats</span></td>
+        <td class="tg-0lax">Root for ingested reference catalogs.</td>
+        <td class="tg-0lax">refcats</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">No permanent group members; users granted temporary access upon request.<br>If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/main_$DATE/skymaps</span></td>
+        <td class="tg-0lax">Root for SkyMap-definition datasets.</td>
+        <td class="tg-0lax">skymaps</td>
+        <td class="tg-0lax">Group members can create user-owned files.</td>
+        <td class="tg-0lax">No permanent group members; users granted temporary access upon request. If possible, disable creation of directories here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2</span></td>
+        <td class="tg-juju"><span style="font-weight:normal">-&gt; /repo/DC2_$BEST</span></td>
+        <td class="tg-0lax"></td>
+        <td class="tg-0lax">Read-only.</td>
+        <td class="tg-0lax">This is a symlink to the latest/best data repository for all DC2 data.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE</span></td>
+        <td class="tg-0lax">Gen3 data repository for DC2.</td>
+        <td class="tg-0lax"></td>
+        <td class="tg-0lax">Read-only.</td>
+        <td class="tg-0lax"></td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE/u</span></td>
+        <td class="tg-0lax">Root for personal collections.</td>
+        <td class="tg-0lax"></td>
+        <td class="tg-0lax">All users can create user-owned subdirectories matching their usernames.</td>
+        <td class="tg-0lax">If possible, make username subdirectories recursively world-readable by default, and disable creation of non-username subdirectories or files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE/$X.$Y[ip]/runs</span></td>
+        <td class="tg-0lax">Root for shared processing outputs (for one simulation version).</td>
+        <td class="tg-0lax">operators</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE/runs</span></td>
+        <td class="tg-0lax">Root for shared processing outputs (mixed simulation versions).</td>
+        <td class="tg-0lax">operators</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE/$X.$Y[ip]/calib</span></td>
+        <td class="tg-0lax">Gen3-produced calibrations to be used with this DC2 version.</td>
+        <td class="tg-0lax">cpp</td>
+        <td class="tg-0lax">Group members can create user-owned subdirectories.</td>
+        <td class="tg-0lax">If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE/refcats</span></td>
+        <td class="tg-0lax">Root for ingested reference catalogs.</td>
+        <td class="tg-0lax">refcats</td>
+        <td class="tg-0lax">Users granted temporary access upon request.</td>
+        <td class="tg-0lax">No permanent group members; users granted temporary access upon request.<br>If possible, make created subdirectories group-writeable and world-readable (recursively), and disable creation of files here.</td>
+      </tr>
+      <tr>
+        <td class="tg-juju"><span style="font-weight:normal">/repo/DC2_$DATE/skymaps</span></td>
+        <td class="tg-0lax">Root for SkyMap-definition datasets.</td>
+        <td class="tg-0lax">skymaps</td>
+        <td class="tg-0lax">Group members can create user-owned files.</td>
+        <td class="tg-0lax">No permanent group members; users granted temporary access upon request. If possible, disable creation of directories here.</td>
+      </tr>
+    </tbody>
+    </table>

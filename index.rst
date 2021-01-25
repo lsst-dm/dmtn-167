@@ -14,9 +14,12 @@
 While the Gen3 Butler provides some intrinsic structure to its data repositories, considerably more is left to convention (often encoded in higher-level packages, like obs_base).
 This document will be - at least at first - a proposal for how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.
 The immediate focus will be the environment at NCSA, but it is hoped that much of this will hold for the IDF and USDF as well.
-A core assumption is that there will be _one_ large shared data repository for all instruments at NCSA (and each other major facility), for "friendly" use by the DM team.
+A core assumption is that there will be a very small number of large shared data repositories for all instruments at NCSA (and each other major facility), for "friendly" use by the DM team; in particular, we will have one data repository for all real (non-simulated) data.
 Smaller custom data repositories may also exist (especially for CI), but we hope to ensure that nearly all development work can be performed without the need for developers to ever create their own personal repositories.
 One or more large shared repositories for science users are also expected to exist, but are explicitly beyond the scope of this proposal.
+
+Simulated data other than DESC DC2 (e.g. the NCSA "test stand") is also explicitly not covered in this proposal; the author is not sufficiently familiar with the scope and structure of such data to make a proposal.
+The real-data repository should generally not contain simulations, however; this could easily lead to confusion and conflicts, while seeming to have no benefits at all.
 
 After consultation with other stakeholders and ultimately RFC, at least some of the content here should probably be moved to the DM Developer Guide.
 
@@ -46,20 +49,20 @@ In addition, collections are constrained to hold only one dataset with a particu
    Butler nomenclature in both Gen2 and Gen3 uses "dataset" to refer to entities that are of order one file (e.g. "a raw" or "a coadd" is "a dataset").
    Informally, we also frequently refer to large sets of these datasets and/or their data IDs ("HSC PDR1" or "DESC DC2") as datasets, but I will avoid that usage whenever possible here.
 
-The naming patterns for collections proposed here are summarized in :ref:`table-overview`, with details and explanations in the following subsections.
+The naming patterns for collections proposed here are summarized in :ref:`table-overview-real` and :ref:`table-overview-dc2`, with details and explanations in the following subsections.
 
-.. _table-overview:
+.. _table-overview-real:
 
-.. table:: Overview of collection naming conventions.
+.. table:: Overview of collection naming conventions for real (non-simulated) data.
 
    +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
    |                   Name Pattern                    |    Type     |                                  Description                                  |
    +===================================================+=============+===============================================================================+
    | <instrument>/defaults                             | CHAINED     | Recommended raw, calibration, and auxiliary data for <instrument>.            |
    +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw/good                             | CHAINED     | Recommended raw data for <instrument>.                                        |
+   | <instrument>/raw                                  | CHAINED     | Recommended raw data for <instrument>.                                        |
    +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw/good/<ticket>                    | TAGGED      | Raw data curated to have no problems on <ticket>.                             |
+   | <instrument>/raw/<ticket>                         | TAGGED      | Raw data curated to have no problems on <ticket>.                             |
    +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
    | <instrument>/raw/all                              | RUN         | Where all raw data are originally ingested.                                   |
    +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
@@ -82,6 +85,40 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
    | u/<user>/*                                        | unspecified | Experimental/development processing by <user>.                                |
    +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
 
+.. _table-overview-dc2:
+
+.. table:: Overview of collection naming conventions for DESC DC2 data.
+
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   |                   Name Pattern                    |    Type     |                                  Description                                  |
+   +===================================================+=============+===============================================================================+
+   | <X>.<Y>[ip]/defaults                              | CHAINED     | Recommended raw, calibration, and auxiliary data for a simulation run.        |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <X>.<Y>[ip]/raw                                   | CHAINED     | Recommended raw data for for a simulation run.                                |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <X>.<Y>[ip]/raw/<ticket>                          | TAGGED      | Raw data curated to have no problems on <ticket>.                             |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <X>.<Y>[ip]/raw/all                               | RUN         | Where all raw data are originally ingested.                                   |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <X>.<Y>[ip]/calib                                 | CHAINED     | Recommended calibrations for for a simulation run.                            |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <X>.<Y>[ip]/calib/<ticket>                        | CALIBRATION | Calibrations certified on <ticket>.                                           |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | <X>.<Y>[ip]/calib/<ticket>/*                      | unspecified | Calibration production runs.                                                  |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | [<X>.<Y>[ip]/]runs/<target>/<release>/<ticket>    | CHAINED     | Public outputs of processing data <target> with <release> on <ticket>.        |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | [<X>.<Y>[ip]/]runs/<target>/<release>/<ticket>/*  | unspecified | Private intermediates of processing data <target> with <release> on <ticket>. |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | refcats                                           | CHAINED     | All reference catalogs (distinguished by dataset type).                       |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | refcats/<ticket>                                  | RUN         | One reference catalog, ingested and sharded on <ticket>.                      |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | skymaps                                           | RUN         | All skymap definition datasets (distinguished by data ID).                    |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   | u/<user>/*                                        | unspecified | Experimental/development processing by <user>.                                |
+   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+
 .. _daf_butler documentation: https://pipelines.lsst.io/v/weekly/modules/lsst.daf.butler/organizing.html
 
 .. _collections-per-instrument:
@@ -89,15 +126,15 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
 Per-instrument collections
 --------------------------
 
-Raw and calibration data associated with a particular instrument is organized into collections that start with the "short" instrument name, e.g. "HSC" or "LSSTCam-imSim", followed by a slash.
+Raw and calibration data associated with a particular real-data instrument is organized into collections that start with the "short" instrument name, e.g. "HSC" or "LSSTCam-imSim", followed by a slash.
 The naming conventions for these collections are codified by the `lsst.obs.base.Instrument`_ class's ``make*Name`` methods.
 The highest-level collections are always defined as ``CHAINED`` collection "pointers" to other versioned collections.
 
 In the case of raw data (including both science observations and raw calibrations), we propose three levels of collections:
 
- - ``<instrument>/raw/all``: the ``RUN`` collection into which all raws for that instrument are originally ingested.
- - ``<instrument>/raw/good/<ticket>``: a ``TAGGED`` collection containing a curated subset of all raws that do not contain problems (e.g. tracking issues, airplanes, etc.), named according to the ticket (e.g. ``DM-98765``) on which the curation work was done.
- - ``<instrument>/raw/good``: a ``CHAINED`` collection that points to the current-best ``*/good/<ticket>`` collection for this instrument.
+- ``<instrument>/raw/all``: the ``RUN`` collection into which all raws for that instrument are originally ingested.
+- ``<instrument>/raw/<ticket>``: a ``TAGGED`` collection containing a curated subset of all raws that do not contain problems (e.g. tracking issues, airplanes, etc.), named according to the ticket (e.g. ``DM-98765``) on which the curation work was done.
+- ``<instrument>/raw``: a ``CHAINED`` collection that points to the current-best ``*/<ticket>`` collection for this instrument.
 
 The collections for master calibrations follow a similar pattern, but because master calibration datasets are produced by our own pipelines, not ingested, [#calibs-not-ingested]_ there is no single ``RUN`` collection that holds these all of these datasets directly.
 As described further in :ref:`collections-calibration-production`, each processing run generates a new ``RUN`` collection.
@@ -129,6 +166,15 @@ While it is somewhat unlikely that we will ever add older mask versions or new m
 The top-level ``HSC/defaults`` collection will include ``HSC/masks`` as well.
 
 This of course establishes a precedent for other instrument-specific auxiliary data, but we expect this to be sufficiently rare new cases probably merit their own RFCs.
+
+.. _collections-in-dc2:
+
+Per-instrument collections for DESC DC2
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For DESC DC2 data repositories, a very similar structure is used, but ``<instrument>`` is replaced here by a ``<X>.<Y>[ip]`` simulation number; while DC2 data repositories may in general have multiple instruments (i.e. ImSim and PhoSim), the simulation version number is also necessary to distinguish between different raws and calibs.
+It is assumed that all simulation versions utilize the same observational metadata (i.e. ``exposure`` and ``visit`` records), at least within each of ImSim and PhoSim, or that differences are sufficiently small that one simulation version's observations can be used with raws from other simulation versions.
+When this is not the case, different data repositories must be used for those incompatible simulation versions.
 
 .. _collections-reference-catalogs:
 
@@ -237,31 +283,32 @@ As noted in :ref:`collections-per-instrument`, certified calibration products in
 Filesystem locations
 ====================
 
-The main shared data repository for all instruments at NCSA will have a public repository root of ``/datasets/repo``, which will be a symlink to a directory of the form ``/datasets/repo_<YYYYMMDD>``.
-These directories will each contain a ``butler.yaml`` file that points to the appropriate database (with a one-to-one correspondance between databases or database schemas and ``repo_<YYYYMMDD>`` directories).
+The main shared data repository for all real-data instruments at NCSA will have a public repository root of ``/repo/main``, which will be a symlink to a directory of the form ``/repo/main_<YYYYMMDD>``.
+These directories will each contain a ``butler.yaml`` file that points to the appropriate database (with a one-to-one correspondance between databases or database schemas and ``main_<YYYYMMDD>`` directories).
+The DC2 shared data repository will use an analogous structure with ``/repo/DC2`` and ``/repo/DC2_<YYYYMMDD>`` paths.
 
-The default (POSIX) datastore will write datasets with templates that begin with the ``RUN`` name, resulting in e.g. the datasets of per-instrument ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/<instrument>/`` and per-user ``RUN`` collections landing in ``/datasets/repo_<YYYYMMDD>/u/<user>``.
+The default (POSIX) datastore will write datasets with templates that begin with the ``RUN`` name, resulting in e.g. the datasets of per-instrument ``RUN`` collections landing in ``/repo/main_<YYYYMMDD>/<instrument>/`` and per-user ``RUN`` collections landing in ``/repo/main_<YYYYMMDD>/u/<user>``.
 Users are discouraged from inspecting these directories (as this will be at least quite different in the IDF or other future cloud-based datastores), and *strongly* discouraged from modifying them in any way other than via middleware tools.
 In many cases, write access will actually be prohibited (see :ref:`access-controls`).
 
-When migrations are necessary due to changes in the repository format (something that is *always* preceded by an RFC with explicit CCB approval), a new ``repo_<YYYYMMDD>`` directory and database/schema pair will be created, and files will shared via hard links until/unless the old repository is retired.
+When migrations are necessary due to changes in the repository format (something that is *always* preceded by an RFC with explicit CCB approval), a new ``main_<YYYYMMDD>`` (or ``DC2_<YYYYMMDD>``) directory and database/schema pair will be created, and files will shared via hard links until/unless the old repository is retired.
 
-.. note::
+The existing ``/datasets`` and ``/lsstdata`` paths will remain largely as-is, and may be mounted as fully read-only in any context in which only Gen3-mediated access is needed.
+Nested paths within that contain fully-Gen2-managed datasets (such as processing outputs) will be converted to Gen3 via hard-link transfers to the corresponding Gen3 location under ``/repo``.
+These Gen2 locations may be removed when the Gen2 middleware is fully retired.
+Files under these paths that are typically symlinked into Gen2 data repositories (such as raw data) will be ingested in-place into the Gen3 data repositories; symlinks would also be possible, but are unnecessary given that Gen3 supports in-place ingest.
+These paths may renamed for consistency after Gen2 retirement, as long as the Gen3 database entries are updated accordingly.
 
-   **TODO**: Are hard links viable here from a sysadmin/GPFS perspective?
-   They certainly would make things easier, because they'd let each repository have its own file without actual duplicationof storage.  Note that Gen3 treats datasets as completely atomic and immutable (aside from deletion), so there is no chance of one repository updating another unexpectedly via hard links.
+:ref:`table-existing-paths` describes the migration plan for existing dataset locations at NCSA in detail.
+New locations (and access controls) are described in :ref:`table-new-paths`.
 
-We will also designate two other non-repository subdirectories of ``/datasets`` for specific roles:
+.. _table-existing-paths:
 
- - ``/datasets/external`` holds files produced by other projects or surveys that may be of use to multiple users but does not fit into the LSST data model.  This includes the original versions of reference catalogs (e.g. Gaia DR2), truth catalogs (e.g. from DESC DC2), dust maps, etc.  Each subdirectory should have a descriptive README, and no files should be put in ``datasets/external`` itself.
+Current paths and migrations
+----------------------------
 
- - ``/datasets/testing`` holds git LFS repositories that are used in CI and rarely change.  These are provided for convenience, and should be updated when their git master branches are; there will be no attempt to make old versions available.
-
-Finally, we propose that all raw ingestion into the shared repository be done with symbolic links or in-place (outside-root) ingests, pointing to read-only filesystems - the existing ``/lsstdata`` for Rubin Observatory data, and a new ``/external-raw`` filesystem for raw data from other instruments.
-
-.. note ::
-
-   **TODO**: This document should probably say more about staging locations for (at least) raws that haven't been ingested yet, for both Rubin Observatory instruments and precursor instruments (which I imagine might be quite different in this respect).  I'd like to at least be confident that the filesystem locations and permissions I'm proposing are consistent with how data arrives and gets ingested.  I don't know enough to write that up myself.
+.. raw:: html
+   :file: _static/current-paths-and-migrations.html
 
 .. _access-controls:
 
@@ -269,8 +316,10 @@ Access Controls
 ===============
 
 The current Gen3 registry architecture does not allow any fine-grained access control in the repository database; we instead rely on "friendly users" being careful and respectful of this shared space.
+The access control rules for most users are extremely simple: do not create, modify, or write datasets to any collection unless it starts with ``u/<user>``.
 
-At the same time, we will use filesystem access controls to protect shared and per-user files, and we plan to implement some checks in the Butler client itself to make it at least extremely difficult to *accidentally* cause problems.
+We may be able to add a small number of guards via database access control systems (specifically PostgreSQL's "row-level security") in the future, but we do not ever plan to make these exhaustive (the long-term plans for butler access control involve a different approach; see `DMTN-163`_).
+Our focus will be limited to the most important shared collections and those easiest to accidentally modify, and the details of these guards are beyond the scope of this document.
 
 .. warning::
 
@@ -278,7 +327,9 @@ At the same time, we will use filesystem access controls to protect shared and p
    These can corrupt the data repository, and we have essentially no way to guard against them.
 
    It should not be necessary in the long term to ever use direct SQL access even for read access; the SQL schema is *not* considered a public interface - but we recognize that this may be necessary for debugging for a while.
-   This can be ensured by running::
+   This can be ensured by running:
+
+   .. code:: sql
 
       SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
 
@@ -286,43 +337,31 @@ At the same time, we will use filesystem access controls to protect shared and p
 
    If you have to do this (and not at the prompting of a middleware team member trying to help diagnose a problem), please also create a ticket explaining what you wanted to do that couldn't be done with butler tools, so we can address that feature gap.
 
-This proposal specifies filesystem access controls in terms of a number of high-level "roles" that certain operators or developers may temporarily opt in to via ``su`` or special setuid tools.
-Usually these roles will be used only to create subdirectories that are owned directly by the true user.
+We do plan to use filesystem access controls to protect shared and per-user files, and we plan to implement some checks in the Butler client itself to make it at least difficult to *accidentally* cause problems.
+
+This proposal specifies filesystem access controls in terms of small number of groups that mostly grant permission to create subdirectories in files in various paths under ``/repo``.
 How to map these to users, groups, and filesystem, directory, or file-level permissions in detail is something I'd prefer to leave to the system administrators.
-All directories in ``/datasets`` will be world-readable.
+All directories in ``/repo`` should always be world-readable.
 
-Within each ``repo_<YYYYMMDD>`` repository directory:
-
- - Regular users will always have write access to their own ``u/<user>`` directory.
-
- - Production operators will have access to an ``execution`` role that can write to ``runs`` and ``<instrument>/runs`` (usually just used to create an owned subdirectory).
-
- - Production operators and certain CPP team members will have access to a ``calibs`` role that can write to all ``<instrument>/calib`` directories (usually just used to create an owned subdirectory).
-
- - Production operators and science pipelines developers who regularly ingest raw data for one or more instruments will have access to per-instrument ``<instrument>_raw`` roles that have write access to the ``<instrument>/raw`` and any auxiliary-data-collection subdirectories (e.g. ``HSC/masks``).  At present, these roles would have to be used directly whenever ingesting new raws, not just to create subdirectories for them, but we may be able to improve this in the future.  For external instruments, this role would also ideally provide a way to get write access (at least for writing new files) to the ``/external-raw`` filesystem (though not necessarily at that mount point).
-
- - All production operators and science pipelines developers have access to the ``auxiliaries`` role, which provides write access to the ``refcats`` and ``skymap`` directores.  This role is used to create per-ticket subdirectories in ``refcats`` prior to starting work on ingesting a new reference catalog, and used directly to run ``butler register-skymap``.
-
-In addition to these filesystem-level controls, we also plan to provide some *informal* protections based on the the same roles in the butler client: the ``Butler`` and ``Registry`` classes (and associated command-line tools) will accept a ``role`` argument that permits write operations on collections with certain associated prefixes.
-The default role is the user's unix username, which provides write access only to ``u/<user>`` collections.
-These guards against careless fingers, not careless brains - we will not attempt to restrict which roles a user can assume *at the butler client level*.
+In addition, all directories in ``/datasets`` and ``/lsstdata`` are expected to be read-only (from the perspective of Gen3 data repositories) and world-readable.
 
 .. note::
 
-   This proposal intentionally makes no mention of the RFC process that is currently in place for ``/datasets`` for Gen2, or the ``/project`` filesystem.
+   The first version of this document proposed much more extensive changes to the access controls in ``/datasets``, to enable easier access (i.e. without admin action) to shared datasets by the expert developers that actually oversee them.
+   Those aspects of the proposal have been dropped because they were a distraction from (and a lower priority than) getting a shared, long-term Gen3 data repository up and available.
 
-   In practice, RFCs for most modifications - certainly routine ingests or calibration updates - almost never exceed our `Empowerment of DM team members`_ criteria, and asking for sysadmins who are not domain experts to do the actual work both increases friction and increases the chance something will go wrong (or, rather, the chances that if something does go wrong, it is not fixed immediately).
+Access controls for directories under ``/repo`` are detailed in the table below.
 
-   This proposal makes no objection to having a separate ``/project`` filesystem for files.
-   But using ``/project`` and symlinks as a way to work around restrictions on write access to appropriate subsets of ``/datasets`` is just that - a workaround - and one that makes it more difficult than it ought to be to find things.
-   If filesystem-level controls (or quotas, etc.) really are necessary even for ``/datasets`` (note that we already allow for filesystem-level controls by symlinking raws from ``/lsstdata`` and ``/external-raw``), I think this is something we can tolerate, but regular directory permission controls within ``/datasets`` would be preferable.
-   If we do use symlinks from ``/project``, we should at least ensure that a::
+.. _table-new-paths:
 
-       /datasets/repo/u/<user> -> /project/<user>/.datarepo
+New paths and access controls
+-----------------------------
 
-   link (or equivalent) is automatically created with the right permissions for all users, and encourage access only via that symlink (hence the hidden directory as a target).
+.. raw:: html
+   :file: _static/new-paths-and-access-controls.html
 
-.. _Empowerment of DM team members: https://developer.lsst.io/team/empowerment.html#empowerment-of-dm-team-members>
+
+.. _DMTN-163: https://dmtn-163.lsst.io
 
 
 Personal and test-package repositories
