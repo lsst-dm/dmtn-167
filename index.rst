@@ -274,22 +274,16 @@ Calibration production runs intended for broad use (i.e. outputs will be at leas
 Those produced for experimental or development purposes should start with ``u/<user>/<ticket>/``.
 
 In either case, the ``RUN`` collections that hold output datasets directly will usually require another disambiguating term, mapping roughly to the expected validity range epoch.
+Our current plan is to use our initial estimate of the start date of the validity range; this will rarely change (though if it does, the date in the ``RUN`` collection - which cannot be changed after datasets have been written - will not reflect the actual validity range start date).
+We could consider using only dates (possibly with human-incremented integer suffixes, as necessary) for ``RUN`` terms while always using full (e.g. second-precision) date-times for actual validity values in order to reduce both confusion and verbosity.
 Actual validity ranges are not assigned until datasets are certified (i.e. added to ``CALIBRATION`` collections), and until then, the usual dataset type + data ID constraint applies (i.e. there can only be one ``bias`` for each detector in a particular ``RUN`` collection).
-
-.. note::
-
-   **TODO**: We should resolve this uncertainty about what the last term should be in calibration production collections by the end of the RFC discussion period.
-   Gen2 used a "CalibDate", which I have always found a bit vague.
-   Some hash of input IDs seems a bit better, but it would need to be computed by external code, because we need the output collection name before we start processing (and also because the user probably wants it in some file before they launch any jobs, so they can easily look up what hashes mean).
-   Either should probably be combined with the timestamp suffixes that ``pipetask`` can automatically add to avoid clashes (especially differences  due to e.g. configuration rather than inputs).
 
 As noted in :ref:`collections-per-instrument`, certified calibration products intended for broad use should go in ``CALIBRATION`` collections named *just* ``<instrument>/calib/<ticket>``.
 ``CALIBRATION`` collections can also of course be nested under ``u/<user>/<ticket>``, but may not always be necessary for development work, because a ``RUN`` or ``CHAINED`` collection directly containing e.g. new ``bias`` datasets can also be used as an input to a processing run that generates new ``flat`` datasets (as long as only one calibration epoch is in play).
 
 .. note::
 
-   **TODO**: While the middleware *can* use ``RUN`` collections as inputs to later CPP processing steps, it's up to the CPP team whether they want to permit that, with the alternative being to always certify between steps as a matter of policy.
-   We should resolve this question by the end of the RFC discussion period.
+   While the middleware *can* use ``RUN`` collections as inputs to later CPP processing steps, the CPP team may declare in the future that this should not be done as part of official calibration production.
 
 .. note::
 
