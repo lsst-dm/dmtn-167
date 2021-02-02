@@ -14,7 +14,7 @@ Policies and Conventions for Organizing Gen3 Data Repositories
 DMTN-167
 ========
 
-While the Gen3 Butler provides some intrinsic structure to its data repositories, considerably more is left to convention (often encoded in higher-level packages, like obs_base).  This document will be - at least at first - a proposal from Science Pipelines leadership on how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.  The immediate focus will be the environment at NCSA, but it is hoped that much of this will hold for the IDF and USDF as well.
+While the Gen3 Butler provides some intrinsic structure to its data repositories, considerably more is left to convention (often encoded in higher-level packages, like obs_base).  This document will be - at least at first - a proposal for how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.  The immediate focus will be the environment at NCSA, but it is hoped that much of this will hold for the IDF and USDF as well.
 
 After consultation with other stakeholders and ultimately RFC, at least some of the content here should probably be moved to the DM Developer Guide.
 
