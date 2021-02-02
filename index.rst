@@ -9,7 +9,7 @@
 
 .. note::
 
-   **This technote represents a policy proposal that has not yet been adopted.**
+   **This technote describes policy that has been adopted (RFC-741) but not fully implemented.**
 
 While the Gen3 Butler provides some intrinsic structure to its data repositories, considerably more is left to convention (often encoded in higher-level packages, like obs_base).
 This document will be - at least at first - a proposal for how to organize data repositories in detail, focusing on collection naming conventions, filesystem locations, and developer workflows.
