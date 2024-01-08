@@ -57,37 +57,51 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
 
 .. _table-overview-real:
 
-.. table:: Overview of collection naming conventions for real (non-simulated) data.
+.. list-table:: Overview of collection naming conventions for real (non-simulated) data.
+   :header-rows: 1
 
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   |                   Name Pattern                    |    Type     |                                  Description                                  |
-   +===================================================+=============+===============================================================================+
-   | <instrument>/defaults                             | CHAINED     | Recommended raw, calibration, and auxiliary data for <instrument>.            |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw                                  | CHAINED     | Recommended raw data for <instrument>.                                        |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw/<ticket>                         | TAGGED      | Raw data curated to have no problems on <ticket>.                             |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw/all                              | RUN         | Where all raw data are originally ingested.                                   |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/calib                                | CHAINED     | Recommended calibrations for <instrument>.                                    |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/calib/<ticket>                       | CALIBRATION | Calibrations certified on <ticket>.                                           |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/calib/<ticket>/*                     | unspecified | Calibration production runs.                                                  |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | [<instrument>/]runs/<target>/<release>/<ticket>   | CHAINED     | Public outputs of processing data <target> with <release> on <ticket>.        |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | [<instrument>/]runs/<target>/<release>/<ticket>/* | unspecified | Private intermediates of processing data <target> with <release> on <ticket>. |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | refcats                                           | CHAINED     | All reference catalogs (distinguished by dataset type).                       |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | refcats/<ticket>                                  | RUN         | One reference catalog, ingested and sharded on <ticket>.                      |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | skymaps                                           | RUN         | All skymap definition datasets (distinguished by data ID).                    |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | u/<user>/*                                        | unspecified | Experimental/development processing by <user>.                                |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   * - Name Pattern
+     - Type
+     - Description
+   * - <instrument>/defaults
+     - CHAINED
+     - Recommended raw, calibration, and auxiliary data for <instrument>.
+   * - <instrument>/raw
+     - CHAINED
+     - Recommended raw data for <instrument>.
+   * - <instrument>/raw/<ticket>
+     - TAGGED
+     - Raw data curated to have no problems on <ticket>.
+   * - <instrument>/raw/all
+     - RUN
+     - Where all raw data are originally ingested.
+   * - <instrument>/calib
+     - CHAINED
+     - Recommended calibrations for <instrument>.
+   * - <instrument>/calib/<ticket>
+     - CALIBRATION
+     - Calibrations certified on <ticket>.
+   * - <instrument>/calib/<ticket>/*
+     - unspecified
+     - Calibration production runs.
+   * - [<instrument>/]runs/<target>/<release>/<ticket>
+     - CHAINED
+     - Public outputs of processing data <target> with <release> on <ticket>.
+   * - [<instrument>/]runs/<target>/<release>/<ticket>/*
+     - unspecified
+     - Private intermediates of processing data <target> with <release> on <ticket>.
+   * - refcats
+     - CHAINED
+     - All reference catalogs (distinguished by dataset type).
+   * - refcats/<ticket>
+     - RUN
+     - One reference catalog, ingested and sharded on <ticket>.
+   * - skymaps
+     - RUN
+     - All skymap definition datasets (distinguished by data ID).
+   * - u/<user>/*
+     - unspecified
+     - Experimental/development processing by <user>.
 
 .. _table-overview-dc2:
 
