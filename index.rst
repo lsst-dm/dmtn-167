@@ -57,37 +57,60 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
 
 .. _table-overview-real:
 
-.. table:: Overview of collection naming conventions for real (non-simulated) data.
+.. list-table:: Overview of collection naming conventions for real (non-simulated) data.
+   :header-rows: 1
 
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   |                   Name Pattern                    |    Type     |                                  Description                                  |
-   +===================================================+=============+===============================================================================+
-   | <instrument>/defaults                             | CHAINED     | Recommended raw, calibration, and auxiliary data for <instrument>.            |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw                                  | CHAINED     | Recommended raw data for <instrument>.                                        |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw/<ticket>                         | TAGGED      | Raw data curated to have no problems on <ticket>.                             |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/raw/all                              | RUN         | Where all raw data are originally ingested.                                   |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/calib                                | CHAINED     | Recommended calibrations for <instrument>.                                    |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/calib/<ticket>                       | CALIBRATION | Calibrations certified on <ticket>.                                           |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | <instrument>/calib/<ticket>/*                     | unspecified | Calibration production runs.                                                  |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | [<instrument>/]runs/<target>/<release>/<ticket>   | CHAINED     | Public outputs of processing data <target> with <release> on <ticket>.        |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | [<instrument>/]runs/<target>/<release>/<ticket>/* | unspecified | Private intermediates of processing data <target> with <release> on <ticket>. |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | refcats                                           | CHAINED     | All reference catalogs (distinguished by dataset type).                       |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | refcats/<ticket>                                  | RUN         | One reference catalog, ingested and sharded on <ticket>.                      |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | skymaps                                           | RUN         | All skymap definition datasets (distinguished by data ID).                    |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
-   | u/<user>/*                                        | unspecified | Experimental/development processing by <user>.                                |
-   +---------------------------------------------------+-------------+-------------------------------------------------------------------------------+
+   * - Name Pattern
+     - Type
+     - Description
+   * - <instrument>/defaults
+     - CHAINED
+     - Recommended raw, calibration, and auxiliary data for <instrument>.
+   * - <instrument>/raw
+     - CHAINED
+     - Recommended raw data for <instrument>.
+   * - <instrument>/raw/<ticket>
+     - TAGGED
+     - Raw data curated to have no problems on <ticket>.
+   * - <instrument>/raw/all
+     - RUN
+     - Where all raw data are originally ingested.
+   * - <instrument>/calib
+     - CHAINED
+     - Recommended calibrations for <instrument>.
+   * - <instrument>/calib/<ticket>
+     - CALIBRATION
+     - Calibrations certified on <ticket>.
+   * - <instrument>/calib/<ticket>/*
+     - unspecified
+     - Calibration production runs.
+   * - [<instrument>/]runs/<target>/<release>/<ticket>
+     - CHAINED
+     - Public outputs of processing data <target> with <release> on <ticket>.
+   * - [<instrument>/]runs/<target>/<release>/<ticket>/*
+     - unspecified
+     - Private intermediates of processing data <target> with <release> on <ticket>.
+   * - refcats
+     - CHAINED
+     - All reference catalogs (distinguished by dataset type).
+   * - refcats/<ticket>
+     - RUN
+     - One reference catalog, ingested and sharded on <ticket>.
+   * - skymaps
+     - RUN
+     - All skymap definition datasets (distinguished by data ID).
+   * - injection/defaults
+     - CHAINED
+     - All required input data for synthetic source injection.
+   * - injection/catalogs
+     - CHAINED
+     - All synthetic source injection input catalogs.
+   * - injection/catalogs/<ticket>
+     - RUN
+     - Synthetic source injection input catalog as defined on <ticket>.
+   * - u/<user>/*
+     - unspecified
+     - Experimental/development processing by <user>.
 
 .. _table-overview-dc2:
 
@@ -204,6 +227,15 @@ The new globally-unique skymap data ID names are both necessary and sufficient f
 
 SkyMap registration is something we expect to be rare in Gen3 - *much* more rare than running ``makeSkyMap.py`` was in Gen2 - because we almost always use one of a few standard SkyMaps, and in Gen3 a SkyMap (a combination of a ``lsst.skymap.BaseSkyMap`` class *and* its configuration) can only be registered once.
 Discrete SkyMaps, which typically cover only a small part of the sky and are *conceptually* a bit more per-user, may be less rare, but our data model currently does not treat these any differently, and until we can identify the patterns and use cases for creating new SkyMaps (even discrete ones), we propose that any new SkyMap registration in a shared repository be preceded by an RFC.
+
+.. _collections-source-injection:
+
+Source injection datasets
+-------------------------
+
+Input catalogs containing synthetic source parameters required for source injection are written to ``injection/catalogs/<ticket>`` ``RUN`` collections, where ``<ticket>`` is the ticket on which the catalog was created.
+After a catalog has been ingested, its ``RUN`` is added to the overall ``injection/catalogs`` ``CHAINED`` collection.
+All required input data for source injection, including input catalogs, are aggregated in the ``injection/defaults`` ``CHAINED`` collection.
 
 .. _collections-shared-official-processing-outputs:
 
