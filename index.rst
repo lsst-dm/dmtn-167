@@ -99,6 +99,9 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
    * - skymaps
      - RUN
      - All skymap definition datasets (distinguished by data ID).
+   * - pretrained_models/<model>
+     - RUN
+     - One pretrained neural network, with package name <model>.
    * - injection/defaults
      - CHAINED
      - All required input data for synthetic source injection.
@@ -327,6 +330,17 @@ As noted in :ref:`collections-per-instrument`, certified calibration products in
    It does not provide a way to avoid duplication of curated calibration datasets that have not changed.
 
    Calibration collections created by converting the default Gen2 calibration repo for an instrument will use ``gen2/defaults`` instead of ``<ticket>``, i.e. ``<instrument>/calib/gen2/defaults`` for the ``CALIBRATION`` collection.
+
+.. _collections-pretrained-model:
+
+Pretrained models
+-----------------
+
+Pretrained neural networks for ``meas.transiNet.RbTransiNetTask`` (and similar tasks that may be developed in the future) are stored in ``pretrained_models/<model>`` ``RUN`` collections, where ``<model>`` is the model package name.
+Models cannot be explicitly selected through task connections, but only implicitly by including a specific run in the execution inputs.
+Therefore, there is no overall ``CHAINED`` collection, and the models are not included in ``<instrument>/defaults``.
+
+Collections disambiguated by ticket number are not necessary, as the name of a model (e.g. ``rbResnet50-DC2``) may include any versioning information, just as refcats are labeled by conversion date.
 
 
 Filesystem locations
