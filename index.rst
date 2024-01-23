@@ -99,6 +99,9 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
    * - skymaps
      - RUN
      - All skymap definition datasets (distinguished by data ID).
+   * - pretrained_models
+     - CHAINED
+     - Recommended pretrained neural network(s).
    * - pretrained_models/<model>
      - RUN
      - One pretrained neural network, with package name <model>.
@@ -180,7 +183,7 @@ Finally, for convenience, we will define per-instrument ``CHAINED`` collections 
 
 - the recommended raws for that instrument (``<instrument>/raw/good``),
 - the recommended calibrations for that instrument (``<instrument>/calib``),
-- and cross-instrument auxiliary collections (``refcats`` and ``skymaps``; see :ref:`collections-reference-catalogs` and :ref:`collections-skymap-definitions`, respectively).
+- and cross-instrument auxiliary collections (``refcats``, ``skymaps``, and ``pretrained_models``; see :ref:`collections-reference-catalogs`, :ref:`collections-skymap-definitions`, and :ref:`collections-pretrained-models`, respectively).
 
 .. _lsst.obs.base.Instrument: https://pipelines.lsst.io/v/weekly/py-api/lsst.obs.base.Instrument.html#lsst.obs.base.Instrument
 
@@ -336,9 +339,14 @@ As noted in :ref:`collections-per-instrument`, certified calibration products in
 Pretrained models
 -----------------
 
-Pretrained neural networks for ``meas.transiNet.RbTransiNetTask`` (and similar tasks that may be developed in the future) are stored in ``pretrained_models/<model>`` ``RUN`` collections, where ``<model>`` is the model package name.
+Pretrained neural network models for ``meas.transiNet.RbTransiNetTask`` (and similar tasks that may be developed in the future) are stored in ``pretrained_models/<model>`` ``RUN`` collections, where ``<model>`` is the model package name.
+Once a model is considered suitable for general use, its ``RUN`` is added to the overall ``pretrained_models`` ``CHAINED`` collection.
+It is not yet clear whether ``pretrained_models`` should act as a single-element "pointer" to the current best model, or whether it can contain multiple ``RUN`` collections in priority order (or for different tasks).
+We will finalize this as we gain more experience with using these models for real data processing.
+
 Models cannot be explicitly selected through task connections, but only implicitly by including a specific run in the execution inputs.
-Therefore, there is no overall ``CHAINED`` collection, and the models are not included in ``<instrument>/defaults``.
+It is expected that most users will use ``pretrained_models`` to use the latest recommended model.
+Those who wish to override the default will need to include the corresponding ``RUN`` collection ahead of ``pretrained_models`` or ``<instrument>/defaults``.
 
 Collections disambiguated by ticket number are not necessary, as the name of a model (e.g. ``rbResnet50-DC2``) may include any versioning information, just as refcats are labeled by conversion date.
 
