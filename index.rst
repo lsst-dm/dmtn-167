@@ -331,7 +331,7 @@ As noted in :ref:`collections-per-instrument`, certified calibration products in
 
    Calibration collections created by converting the default Gen2 calibration repo for an instrument will use ``gen2/defaults`` instead of ``<ticket>``, i.e. ``<instrument>/calib/gen2/defaults`` for the ``CALIBRATION`` collection.
 
-.. _collections-pretrained-model:
+.. _collections-pretrained-models:
 
 Pretrained models
 -----------------
