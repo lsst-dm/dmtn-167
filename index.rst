@@ -87,6 +87,12 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
    * - [<instrument>/]runs/<target>/<release>/<ticket>/*
      - unspecified
      - Private intermediates of processing data <target> with <release> on <ticket>.
+   * - <instrument>/prompt/output-YYYY-MM-DD
+     - CHAINED
+     - Prompt Processing outputs for <instrument> on day_obs YYYY-MM-DD.
+   * - <instrument>/prompt/output-YYYY-MM-DD/<pipeline>/pipelines-<package-hash>-config-<config-hash>
+     - RUN
+     - Prompt Processing outputs of <pipeline> for <instrument> on day_obs YYYY-MM-DD with software and configurations in hashes.
    * - refcats
      - CHAINED
      - All reference catalogs (distinguished by dataset type).
@@ -245,6 +251,11 @@ All required input data for source injection, including input catalogs, are aggr
 Shared/official processing outputs
 ----------------------------------
 
+Official processing outputs fall into two main categories: Data Release Processing (DRP) and Prompt Processing.
+
+DRP-style processing
+^^^^^^^^^^^^^^^^^^^^
+
 Processing runs overseen by production operators should produce output collections of the form ``<instrument>/runs/<target>/<release>/<ticket>``, or ``runs/<target>/<release>/<ticket>`` in the (rare) case of processing that includes science data from multiple instruments and none of them can be considered the "primary" instrument.
 ``<target>`` is a human-meaningful name for the set of data IDs being processed, and ``<release>`` is some kind of DM software release version, so examples of complete processing-output collection names might include ``HSC/runs/RC2/w_2020_50/DM-75643`` or ``DECam/runs/HiTS-2015/d_2021_90/DM-80000``.
 These versions are intended to make it easy for users to browse collections and understand what is in them at a glance; formal provenance for software versions actually used in the processing will be automatically stored in the data repository itself.
@@ -286,6 +297,40 @@ that references (at the level of individual datasets) the ``first`` and ``second
    The Gen3 repository will eventually be extended to include fine-grained, exact provenance - essentially a serialization of the directed acyclic graph (DAG) that describes the processing.
    Whether queries against that DAG are fast enough to allow this more rigorous provenance information to be used as a type of collection (replacing some usage of ``TAGGED`` and ``CHAINED`` collections) remains to be seen, however.
    It is also worth noting that in general the full DAG does not maintain the usual collection invariant of having only one dataset with a particular dataset type and data ID (e.g. two calexps with the same data ID, from two differently-configured runs, could each contribute to different, non-conflicting coadd patches in downstream runs).
+
+
+Prompt Processing
+^^^^^^^^^^^^^^^^^
+
+Prompt Processing runs are automated processing runs that execute on incoming observational data in near real time.
+Unlike DRP-style processing, Prompt Processing operates continuously and autonomously: for each observation day, the service automatically processes all data matching configured criteria (such as specific survey programs) as the data arrives.
+While Prompt Processing runs within a specific software release environment (deployed as a container image), the collection naming convention uses hash-based identifiers rather than explicit release versions and ticket numbers.
+This approach reflects the operational nature of the service: a single deployment may process data across multiple nights, and different releases may be deployed mid-observation in response to changing conditions or emergencies.
+In this context, the precise software and configuration state, captured by the hash values, provides more suitable provenance than a nominal release label or ticket number would.
+
+Prompt Processing output ``RUN`` collections follow the naming pattern:
+
+``<instrument>/prompt/output-YYYY-MM-DD/<pipeline>/pipelines-<package-hash>-config-<config-hash>``
+
+where:
+
+* ``YYYY-MM-DD`` represents the observation day (``day_obs``)
+* ``<pipeline>`` identifies the specific pipeline executed
+* ``<package-hash>`` is a hash of the complete software environment, including all Python package versions in the active Science Pipelines installation and the Prompt Processing code itself (pipeline definitions, configuration files, and source code)
+* ``<config-hash>`` is a hash of the runtime configuration, including the APDB configuration and other pipeline-specific settings
+
+This naming scheme ensures that each Prompt Processing run produces a uniquely identifiable output collection with full provenance traceability.
+The embedded hash values guarantee that any change to either the software environment or the runtime configuration will result in a new, distinct collection name, enabling precise reproducibility and change tracking.
+
+An example Prompt Processing ``RUN`` collection name is ``LSSTCam/prompt/output-2024-03-15/ApPipe/pipelines-a1b2c3d-config-e4f5g6h``.
+
+For each observation day, a ``CHAINED`` collection is created to aggregate all output ``RUN`` collection from Prompt Processing.
+
+An example Prompt Processing daily chain is ``LSSTCam/prompt/output-2024-03-15``.
+
+These collection naming conventions are specific to real-time Prompt Processing.
+Collection conventions for Daytime AP Catchup processing are currently under
+discussion in RFC-1159.
 
 .. _collections-developer-processing-outputs:
 
