@@ -87,12 +87,18 @@ The naming patterns for collections proposed here are summarized in :ref:`table-
    * - [<instrument>/]runs/<target>/<release>/<ticket>/*
      - unspecified
      - Private intermediates of processing data <target> with <release> on <ticket>.
-   * - <instrument>/prompt/output-YYYY-MM-DD
+   * - <instrument>/runs/prompt-YYYYMMDD
      - CHAINED
-     - Prompt Processing outputs for <instrument> on day_obs YYYY-MM-DD.
-   * - <instrument>/prompt/output-YYYY-MM-DD/<pipeline>/pipelines-<package-hash>-config-<config-hash>
+     - Daily chain aggregating all Prompt Processing and Daytime AP output RUN collections (no inputs) for <instrument> on day_obs YYYYMMDD.
+   * - <instrument>/runs/prompt/YYYYMMDD/<pipeline>/<deployment-id>
      - RUN
-     - Prompt Processing outputs of <pipeline> for <instrument> on day_obs YYYY-MM-DD with software and configurations in hashes.
+     - Prompt Processing outputs of <pipeline> for <instrument> on day_obs YYYYMMDD; ``<deployment-id>`` is a string identifying the software environment and configuration.
+   * - <instrument>/runs/daytimeAP-YYYYMMDD
+     - CHAINED
+     - Daily chain of Daytime AP outputs for <instrument> on day_obs YYYYMMDD (used for prompt publication).
+   * - <instrument>/runs/daytimeAP/YYYYMMDD/*
+     - RUN
+     - Daytime AP outputs for <instrument> on day_obs YYYYMMDD.
    * - refcats
      - CHAINED
      - All reference catalogs (distinguished by dataset type).
@@ -251,7 +257,7 @@ All required input data for source injection, including input catalogs, are aggr
 Shared/official processing outputs
 ----------------------------------
 
-Official processing outputs fall into two main categories: Data Release Processing (DRP) and Prompt Processing.
+Official processing outputs fall into two main categories: Data Release Processing (DRP) and Alert Production (AP).
 
 DRP-style processing
 ^^^^^^^^^^^^^^^^^^^^
@@ -299,38 +305,46 @@ that references (at the level of individual datasets) the ``first`` and ``second
    It is also worth noting that in general the full DAG does not maintain the usual collection invariant of having only one dataset with a particular dataset type and data ID (e.g. two calexps with the same data ID, from two differently-configured runs, could each contribute to different, non-conflicting coadd patches in downstream runs).
 
 
-Prompt Processing
-^^^^^^^^^^^^^^^^^
+AP-style processing
+^^^^^^^^^^^^^^^^^^^
+
+Alert Production pipeline is run in Prompt Processing and Daytime AP campaigns.
 
 Prompt Processing runs are automated processing runs that execute on incoming observational data in near real time.
 Unlike DRP-style processing, Prompt Processing operates continuously and autonomously: for each observation day, the service automatically processes all data matching configured criteria (such as specific survey programs) as the data arrives.
-While Prompt Processing runs within a specific software release environment (deployed as a container image), the collection naming convention uses hash-based identifiers rather than explicit release versions and ticket numbers.
+While Prompt Processing runs within a specific software release environment (deployed as a container image), the collection naming convention uses a deployment identifier rather than explicit release versions and ticket numbers.
 This approach reflects the operational nature of the service: a single deployment may process data across multiple nights, and different releases may be deployed mid-observation in response to changing conditions or emergencies.
-In this context, the precise software and configuration state, captured by the hash values, provides more suitable provenance than a nominal release label or ticket number would.
 
 Prompt Processing output ``RUN`` collections follow the naming pattern:
 
-``<instrument>/prompt/output-YYYY-MM-DD/<pipeline>/pipelines-<package-hash>-config-<config-hash>``
+``<instrument>/runs/prompt/YYYYMMDD/<pipeline>/<deployment-id>``
 
 where:
 
-* ``YYYY-MM-DD`` represents the observation day (``day_obs``)
-* ``<pipeline>`` identifies the specific pipeline executed
-* ``<package-hash>`` is a hash of the complete software environment, including all Python package versions in the active Science Pipelines installation and the Prompt Processing code itself (pipeline definitions, configuration files, and source code)
-* ``<config-hash>`` is a hash of the runtime configuration, including the APDB configuration and other pipeline-specific settings
+* ``YYYYMMDD`` represents the observation day (``day_obs``)
+* ``<pipeline>`` identifies the specific pipeline executed (e.g. ``ApPipe``, ``SingleFrame``)
+* ``<deployment-id>`` is a string identifying the software environment and configuration; it is unique per the version of pipelines and configs.
 
-This naming scheme ensures that each Prompt Processing run produces a uniquely identifiable output collection with full provenance traceability.
-The embedded hash values guarantee that any change to either the software environment or the runtime configuration will result in a new, distinct collection name, enabling precise reproducibility and change tracking.
+An example Prompt Processing ``RUN`` collection name is ``LSSTCam/runs/prompt/20240315/ApPipe/pipelines-a1b2c3d-config-e4f5g6h``.
 
-An example Prompt Processing ``RUN`` collection name is ``LSSTCam/prompt/output-2024-03-15/ApPipe/pipelines-a1b2c3d-config-e4f5g6h``.
+Daytime AP (the daytime Alert Production catchup processing) runs after each night via BPS and processes data that was not handled in real time.
+Its output ``RUN`` collections are named under the prefix ``<instrument>/runs/daytimeAP/YYYYMMDD/``.
 
-For each observation day, a ``CHAINED`` collection is created to aggregate all output ``RUN`` collection from Prompt Processing.
+For each observation day, a ``CHAINED`` collection aggregates all Prompt Processing and Daytime AP output ``RUN`` collections (outputs only):
 
-An example Prompt Processing daily chain is ``LSSTCam/prompt/output-2024-03-15``.
+``<instrument>/runs/prompt-YYYYMMDD``
 
-These collection naming conventions are specific to real-time Prompt Processing.
-Collection conventions for Daytime AP Catchup processing are currently under
-discussion in RFC-1159.
+Daytime AP output ``RUN`` collections are prepended to this chain when the Daytime AP run completes, so the chain always reflects the most recent results.
+An example daily chain is ``LSSTCam/runs/prompt-20240315``.
+
+An additional chain containing only Daytime AP outputs is also created for use by the Prompt Publication Service:
+
+``<instrument>/runs/daytimeAP-YYYYMMDD``
+
+General users (anything other than prompt publication) should use the ``<instrument>/runs/prompt-YYYYMMDD`` chain.
+
+These naming conventions were adopted in RFC-1159 and took effect starting ``day_obs`` 20260409.
+Collections created before that date retain the old naming scheme (``<instrument>/prompt/output-YYYY-MM-DD``).
 
 .. _collections-developer-processing-outputs:
 
